@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func findMatchingFiles(rootPath string, substring string) ([]string, error) {
@@ -38,17 +39,31 @@ func findMatchingFiles(rootPath string, substring string) ([]string, error) {
 	return result, nil
 }
 
+// Returns path to a newly created folder
+func generateExportFolderName(outputFolder string) string {
+	t := time.Now()
+	timestamp := t.Format("2006-01-02-15-04-05")
+	folderName := fmt.Sprintf("export-%s", timestamp)
+	return filepath.Join(outputFolder, folderName)
+}
+
 func main() {
-	graphPath := flag.String("graphPath", "", "Path to the root of your logseq graph containing /pages and /journals directories.")
+	graphPath := flag.String("graphPath", "", "[MANDATORY] Path to the root of your logseq graph containing /pages and /journals directories.")
+	outputFolder := flag.String("outputFolder", "", "[MANDATORY] Folder where this program creates a new subfolder with public logseq pages.")
 	flag.Parse()
-	if *graphPath == "" {
-		log.Println("graphPath argument is mandatory")
+	if *graphPath == "" || *outputFolder == "" {
+		log.Println("mandatory argument is missing")
 		flag.Usage()
 		os.Exit(1)
 	}
 	result, err := findMatchingFiles(*graphPath, "public::")
 	if err != nil {
 		log.Fatalf("Error during walking through a folder %v", err)
+	}
+	exportFolder := generateExportFolderName(*outputFolder)
+	err = os.Mkdir(exportFolder, os.ModePerm)
+	if err != nil {
+		log.Fatalf("Error when making the %q folder %v", exportFolder, err)
 	}
 	fmt.Println(result)
 }
