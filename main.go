@@ -9,9 +9,16 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 	"time"
 )
+
+type page struct {
+	filename   string
+	attributes map[string]string
+	text       string
+}
 
 func findMatchingFiles(rootPath string, substring string) ([]string, error) {
 	var result []string
@@ -82,6 +89,25 @@ func main() {
 
 func sanitizeName(orig string) string {
 	return strings.ReplaceAll(orig, " ", "-")
+}
+
+func parseTextAndAttributes(rawContent string) (string, map[string]string) {
+	result := regexp.MustCompile(`^((?:.*?::.*\n)*)\n?((?:.|\s)+)$`).FindStringSubmatch(rawContent)
+	attrArray := regexp.MustCompile(`(?m:^(.*?)::\s*(.*)$)`).FindAllStringSubmatch(result[1], -1)
+	attributes := map[string]string{}
+	for _, attrStrings := range attrArray {
+		attributes[attrStrings[1]] = attrStrings[2]
+	}
+	return result[2], attributes
+}
+
+func parsePage(filename, rawContent string) page {
+	text, attributes := parseTextAndAttributes(rawContent)
+	return page{
+		filename:   filename,
+		attributes: attributes,
+		text:       text,
+	}
 }
 
 func copyFile(src, dest string) error {
