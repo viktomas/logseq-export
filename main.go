@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -15,6 +16,9 @@ import (
 func findMatchingFiles(rootPath string, substring string) ([]string, error) {
 	var result []string
 	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, walkError error) error {
+		if walkError != nil {
+			return walkError
+		}
 		if d.IsDir() {
 			return nil
 		}
@@ -56,7 +60,7 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	result, err := findMatchingFiles(*graphPath, "public::")
+	publicFiles, err := findMatchingFiles(*graphPath, "public::")
 	if err != nil {
 		log.Fatalf("Error during walking through a folder %v", err)
 	}
@@ -65,5 +69,43 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error when making the %q folder %v", exportFolder, err)
 	}
-	fmt.Println(result)
+	for _, publicFile := range publicFiles {
+		log.Printf("copying %q", publicFile)
+		_, name := filepath.Split(publicFile)
+		dest := filepath.Join(exportFolder, sanitizeName(name))
+		err = copyFile(publicFile, dest)
+		if err != nil {
+			log.Fatalf("Error when copying file %q: %v", dest, err)
+		}
+	}
+}
+
+func sanitizeName(orig string) string {
+	return strings.ReplaceAll(orig, " ", "-")
+}
+
+func copyFile(src, dest string) error {
+
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	destFile, err := os.Create(dest)
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+
+	_, err = io.Copy(destFile, srcFile)
+	if err != nil {
+		return err
+	}
+
+	err = destFile.Sync()
+	if err != nil {
+		return err
+	}
+	return nil
 }
