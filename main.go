@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"golang.org/x/exp/slices"
 )
 
 type page struct {
@@ -84,17 +86,21 @@ func main() {
 		page := parsePage(name, srcContent)
 		result := transformPage(page)
 		dest := filepath.Join(exportFolder, result.filename)
-		err = writeStringToFile(dest, render(result))
+		err = writeStringToFile(dest, render(result, []string{"date", "slug"}))
 		if err != nil {
 			log.Fatalf("Error when copying file %q: %v", dest, err)
 		}
 	}
 }
 
-func render(p page) string {
+func render(p page, dontQuote []string) string {
 	attributeBuilder := strings.Builder{}
 	for name, value := range p.attributes {
-		attributeBuilder.WriteString(fmt.Sprintf("%s: %s\n", name, value))
+		if slices.Contains(dontQuote, name) {
+			attributeBuilder.WriteString(fmt.Sprintf("%s: %s\n", name, value))
+		} else {
+			attributeBuilder.WriteString(fmt.Sprintf("%s: %q\n", name, value))
+		}
 	}
 	return fmt.Sprintf("---\n%s---\n%s", attributeBuilder.String(), p.text)
 }
