@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -80,7 +79,11 @@ func main() {
 		log.Printf("copying %q", publicFile)
 		_, name := filepath.Split(publicFile)
 		dest := filepath.Join(exportFolder, sanitizeName(name))
-		err = copyFile(publicFile, dest)
+		srcContent, err := readFileToString(publicFile)
+		if err != nil {
+			log.Fatalf("Error when reading the %q file: %v", publicFile, err)
+		}
+		err = writeStringToFile(dest, srcContent)
 		if err != nil {
 			log.Fatalf("Error when copying file %q: %v", dest, err)
 		}
@@ -110,28 +113,24 @@ func parsePage(filename, rawContent string) page {
 	}
 }
 
-func copyFile(src, dest string) error {
-
+func readFileToString(src string) (string, error) {
 	srcFile, err := os.Open(src)
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer srcFile.Close()
+	bytes, err := os.ReadFile(src)
+	if err != nil {
+		return "", err
+	}
+	return string(bytes), nil
+}
 
-	destFile, err := os.Create(dest)
+func writeStringToFile(dest string, content string) error {
+	err := os.WriteFile(dest, []byte(content), os.ModePerm)
 	if err != nil {
 		return err
 	}
-	defer destFile.Close()
 
-	_, err = io.Copy(destFile, srcFile)
-	if err != nil {
-		return err
-	}
-
-	err = destFile.Sync()
-	if err != nil {
-		return err
-	}
 	return nil
 }
