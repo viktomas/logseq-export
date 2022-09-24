@@ -38,7 +38,7 @@ func secondToFirstBulletPoints(from string) string {
 func removeTabFromMultiLevelBulletPoints(from string) string {
 	return regexp.MustCompile(`(?m:^\t{2,}-)`).ReplaceAllStringFunc(from, func(s string) string {
 		return s[1:]
-	}) //TODO make general (it can be merged with previous rule)
+	})
 }
 
 const multilineBlocks = `\n?(- .*\n(?:  .*\n?)+)`
