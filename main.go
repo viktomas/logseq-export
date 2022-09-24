@@ -84,11 +84,19 @@ func main() {
 		page := parsePage(name, srcContent)
 		result := transformPage(page)
 		dest := filepath.Join(exportFolder, result.filename)
-		err = writeStringToFile(dest, result.text)
+		err = writeStringToFile(dest, render(result))
 		if err != nil {
 			log.Fatalf("Error when copying file %q: %v", dest, err)
 		}
 	}
+}
+
+func render(p page) string {
+	attributeBuilder := strings.Builder{}
+	for name, value := range p.attributes {
+		attributeBuilder.WriteString(fmt.Sprintf("%s: %s\n", name, value))
+	}
+	return fmt.Sprintf("---\n%s---\n%s", attributeBuilder.String(), p.text)
 }
 
 func readFileToString(src string) (string, error) {
