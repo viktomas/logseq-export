@@ -23,7 +23,7 @@ func GenerateFileName(t *testing.T) {
 			"slug": "this-is-a-slug",
 			"date": "2022-09-24",
 		})
-		require.Equal(t, "2022-09-24-this-is-a-slug", result)
+		require.Equal(t, "2022-09-24-this-is-a-slug.md", result)
 	})
 
 	t.Run("combines slug and date into a filename", func(t *testing.T) {
@@ -31,13 +31,22 @@ func GenerateFileName(t *testing.T) {
 			"slug": "this-is-a-slug",
 			"date": "2022-09-24",
 		})
-		require.Equal(t, "2022-09-24-this-is-a-slug", result)
+		require.Equal(t, "2022-09-24-this-is-a-slug.md", result)
 	})
 
 }
 
-func TestTransformPage(t *testing.T) {
+func transformText(from string) string {
+	testPage := page{
+		filename:   "",
+		attributes: map[string]string{},
+		text:       from,
+	}
+	result := transformPage(testPage)
+	return result.text
+}
 
+func TestTransformPage(t *testing.T) {
 	t.Run("generates filename", func(t *testing.T) {
 		testPage := page{
 			filename: "name with space.md",
@@ -48,6 +57,26 @@ func TestTransformPage(t *testing.T) {
 			text: "",
 		}
 		result := transformPage(testPage)
-		require.Equal(t, "2022-09-24-this-is-a-slug", result.filename)
+		require.Equal(t, "2022-09-24-this-is-a-slug.md", result.filename)
+	})
+
+	t.Run("removes dashes with no text after them", func(t *testing.T) {
+		result := transformText("-\n\t- \n\t\t-")
+		require.Equal(t, "\n\n", result)
+	})
+
+	t.Run("removes dashes from the text", func(t *testing.T) {
+		result := transformText("-\n- hello")
+		require.Equal(t, "\n\nhello", result)
+	})
+
+	t.Run("turns second level bullet points into first level", func(t *testing.T) {
+		result := transformText("\t- hello\n\t- world")
+		require.Equal(t, "\n- hello\n\n- world", result) // TODO: maybe remove the duplicated new line
+	})
+
+	t.Run("removes one tab from multi-level bullet points", func(t *testing.T) {
+		result := transformText("\t\t- hello\n\t\t\t- world")
+		require.Equal(t, "\t- hello\n\t\t- world", result)
 	})
 }
