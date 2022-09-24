@@ -79,4 +79,27 @@ func TestTransformPage(t *testing.T) {
 		result := transformText("\t\t- hello\n\t\t\t- world")
 		require.Equal(t, "\t- hello\n\t\t- world", result)
 	})
+	t.Run("removes tabs from all subsequent lines of a bullet point", func(t *testing.T) {
+		result := transformText(`
+- ~~~ts
+  const hello = "world";
+  ~~~
+- single line
+- multiple
+  lines
+  in
+  one`)
+		require.Equal(t, `
+
+~~~ts
+const hello = "world";
+~~~
+
+single line
+
+multiple
+lines
+in
+one`, result)
+	})
 }

@@ -41,6 +41,31 @@ func removeTabFromMultiLevelBulletPoints(from string) string {
 	}) //TODO make general (it can be merged with previous rule)
 }
 
+const multilineBlocks = `\n?(- .*\n(?:  .*\n?)+)`
+
+/*
+Makes sure that code blocks and multiline blocks are without any extra characters at the start of the line
+
+  - ```ts
+    const hello = "world"
+    ```
+
+is changed to
+
+```ts
+const hello = "world"
+```
+*/
+func unindentMultilineStrings(from string) string {
+	return regexp.MustCompile(multilineBlocks).ReplaceAllStringFunc(from, func(s string) string {
+		match := regexp.MustCompile(multilineBlocks).FindStringSubmatch(s)
+		onlyBlock := match[1]
+		replacement := regexp.MustCompile(`((?m:^[- ] ))`).ReplaceAllString(onlyBlock, "") // remove the leading spaces or dash
+		replacedString := strings.Replace(s, onlyBlock, replacement, 1)
+		return fmt.Sprintf("\n%s", replacedString) // add extra new line
+	})
+}
+
 func applyAll(from string, transformers ...func(string) string) string {
 	result := from
 	for _, t := range transformers {
@@ -54,6 +79,7 @@ func transformPage(p page) page {
 	text := applyAll(
 		p.text,
 		removeEmptyBulletPoints,
+		unindentMultilineStrings,
 		firstBulletPointsToParagraphs,
 		secondToFirstBulletPoints,
 		removeTabFromMultiLevelBulletPoints,
