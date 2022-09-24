@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"regexp"
 	"strings"
 	"time"
 )
@@ -77,39 +76,18 @@ func main() {
 	}
 	for _, publicFile := range publicFiles {
 		log.Printf("copying %q", publicFile)
-		_, name := filepath.Split(publicFile)
-		dest := filepath.Join(exportFolder, sanitizeName(name))
 		srcContent, err := readFileToString(publicFile)
 		if err != nil {
 			log.Fatalf("Error when reading the %q file: %v", publicFile, err)
 		}
-		err = writeStringToFile(dest, srcContent)
+		_, name := filepath.Split(publicFile)
+		page := parsePage(name, srcContent)
+		result := transformPage(page)
+		dest := filepath.Join(exportFolder, result.filename)
+		err = writeStringToFile(dest, result.text)
 		if err != nil {
 			log.Fatalf("Error when copying file %q: %v", dest, err)
 		}
-	}
-}
-
-func sanitizeName(orig string) string {
-	return strings.ReplaceAll(orig, " ", "-")
-}
-
-func parseTextAndAttributes(rawContent string) (string, map[string]string) {
-	result := regexp.MustCompile(`^((?:.*?::.*\n)*)\n?((?:.|\s)+)$`).FindStringSubmatch(rawContent)
-	attrArray := regexp.MustCompile(`(?m:^(.*?)::\s*(.*)$)`).FindAllStringSubmatch(result[1], -1)
-	attributes := map[string]string{}
-	for _, attrStrings := range attrArray {
-		attributes[attrStrings[1]] = attrStrings[2]
-	}
-	return result[2], attributes
-}
-
-func parsePage(filename, rawContent string) page {
-	text, attributes := parseTextAndAttributes(rawContent)
-	return page{
-		filename:   filename,
-		attributes: attributes,
-		text:       text,
 	}
 }
 
