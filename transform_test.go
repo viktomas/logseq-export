@@ -60,6 +60,18 @@ func TestTransformPage(t *testing.T) {
 		require.Equal(t, "2022-09-24-this-is-a-slug.md", result.filename)
 	})
 
+	t.Run("uses folder attribute in file name", func(t *testing.T) {
+		testPage := page{
+			filename: "name with space.md",
+			attributes: map[string]string{
+				"folder": "posts",
+			},
+			text: "",
+		}
+		result := transformPage(testPage)
+		require.Equal(t, "posts/name-with-space.md", result.filename)
+	})
+
 	t.Run("removes dashes with no text after them", func(t *testing.T) {
 		result := transformText("-\n\t- \n\t\t-")
 		require.Equal(t, "\n\n", result)

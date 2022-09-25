@@ -9,7 +9,6 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
 	"golang.org/x/exp/slices"
 )
@@ -50,19 +49,11 @@ func findMatchingFiles(rootPath string, substring string) ([]string, error) {
 	return result, nil
 }
 
-// Returns path to a newly created folder
-func generateExportFolderName(outputFolder string) string {
-	t := time.Now()
-	timestamp := t.Format("2006-01-02-15-04-05")
-	folderName := fmt.Sprintf("export-%s", timestamp)
-	return filepath.Join(outputFolder, folderName)
-}
-
 func main() {
 	graphPath := flag.String("graphPath", "", "[MANDATORY] Path to the root of your logseq graph containing /pages and /journals directories.")
-	outputFolder := flag.String("outputFolder", "", "[MANDATORY] Folder where this program creates a new subfolder with public logseq pages.")
+	blogFolder := flag.String("blogFolder", "", "[MANDATORY] Folder where this program creates a new subfolder with public logseq pages.")
 	flag.Parse()
-	if *graphPath == "" || *outputFolder == "" {
+	if *graphPath == "" || *blogFolder == "" {
 		log.Println("mandatory argument is missing")
 		flag.Usage()
 		os.Exit(1)
@@ -70,11 +61,6 @@ func main() {
 	publicFiles, err := findMatchingFiles(*graphPath, "public::")
 	if err != nil {
 		log.Fatalf("Error during walking through a folder %v", err)
-	}
-	exportFolder := generateExportFolderName(*outputFolder)
-	err = os.Mkdir(exportFolder, os.ModePerm)
-	if err != nil {
-		log.Fatalf("Error when making the %q folder %v", exportFolder, err)
 	}
 	for _, publicFile := range publicFiles {
 		log.Printf("copying %q", publicFile)
@@ -85,7 +71,7 @@ func main() {
 		_, name := filepath.Split(publicFile)
 		page := parsePage(name, srcContent)
 		result := transformPage(page)
-		dest := filepath.Join(exportFolder, result.filename)
+		dest := filepath.Join(*blogFolder, result.filename)
 		folder, _ := filepath.Split(dest)
 		err = os.MkdirAll(folder, os.ModePerm)
 		if err != nil {
