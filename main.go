@@ -50,9 +50,9 @@ func findMatchingFiles(rootPath string, substring string) ([]string, error) {
 }
 
 func main() {
-	graphPath := flag.String("graphPath", "", "[MANDATORY] Path to the root of your logseq graph containing /pages and /journals directories.")
+	graphPath := flag.String("graphPath", "", "[MANDATORY] Folder where all public pages are exported.")
 	blogFolder := flag.String("blogFolder", "", "[MANDATORY] Folder where this program creates a new subfolder with public logseq pages.")
-	unquotedProperties := flag.String("unquotedProperties", "", "comma-separated list of logseq page properties that won't be quoted in the markdown frontmatter, e.g. 'date,public,slug")
+	unquotedProperties := flag.String("unquotedProperties", "", "comma-separated list of logseq page properties that won't be quoted in the markdown front matter, e.g. 'date,public,slug")
 	flag.Parse()
 	if *graphPath == "" || *blogFolder == "" {
 		log.Println("mandatory argument is missing")
@@ -64,7 +64,6 @@ func main() {
 		log.Fatalf("Error during walking through a folder %v", err)
 	}
 	for _, publicFile := range publicFiles {
-		log.Printf("copying %q", publicFile)
 		srcContent, err := readFileToString(publicFile)
 		if err != nil {
 			log.Fatalf("Error when reading the %q file: %v", publicFile, err)
