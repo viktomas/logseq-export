@@ -1,9 +1,14 @@
 # logseq-extractor
 
-Tool to take raw [Logseq](https://github.com/logseq/logseq) Markdown files with `public::` page properties and turn them into Markdown blog posts with front matter.
+Tool to turn raw [Logseq](https://github.com/logseq/logseq) Markdown files (with `public::` page property) into Markdown blog posts with front matter.
 
 - Takes Logseq page properties (`title:: Hello world`) and turns them into [Front Matter properties](https://gohugo.io/content-management/front-matter/) `title: Hello World`.
 - Changes the Markdown syntax to remove the top-level bullet points.
+
+## Install
+
+- Download the latest binary for your OS in the [Releases](https://github.com/viktomas/logseq-extractor/releases) page
+- `go install github.com/viktomas/logseq-extractor@latest` if you have Go installed
 
 ## Usage
 
