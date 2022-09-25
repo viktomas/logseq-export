@@ -7,6 +7,7 @@ import (
 	"strings"
 )
 
+const baseFolder = "content"
 const defaultFolder = "posts" // TODO configure default folder
 
 func sanitizeName(orig string) string {
@@ -92,7 +93,7 @@ func transformPage(p page) page {
 		removeTabFromMultiLevelBulletPoints,
 	)
 	return page{
-		filename:   filepath.Join(folder, filename),
+		filename:   filepath.Join(baseFolder, folder, filename),
 		attributes: p.attributes,
 		text:       text,
 	}
