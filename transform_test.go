@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path/filepath"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -69,7 +70,7 @@ func TestTransformPage(t *testing.T) {
 			text: "",
 		}
 		result := transformPage(testPage)
-		require.Equal(t, "posts/name-with-space.md", result.filename)
+		require.Equal(t, filepath.Join("posts", "name-with-space.md"), result.filename)
 	})
 
 	t.Run("removes dashes with no text after them", func(t *testing.T) {
