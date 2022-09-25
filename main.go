@@ -52,6 +52,7 @@ func findMatchingFiles(rootPath string, substring string) ([]string, error) {
 func main() {
 	graphPath := flag.String("graphPath", "", "[MANDATORY] Path to the root of your logseq graph containing /pages and /journals directories.")
 	blogFolder := flag.String("blogFolder", "", "[MANDATORY] Folder where this program creates a new subfolder with public logseq pages.")
+	unquotedProperties := flag.String("unquotedProperties", "", "comma-separated list of logseq page properties that won't be quoted in the markdown frontmatter, e.g. 'date,public,slug")
 	flag.Parse()
 	if *graphPath == "" || *blogFolder == "" {
 		log.Println("mandatory argument is missing")
@@ -77,11 +78,18 @@ func main() {
 		if err != nil {
 			log.Fatalf("Error when creating parent directory for %q: %v", dest, err)
 		}
-		err = writeStringToFile(dest, render(result, []string{"date", "slug"}))
+		err = writeStringToFile(dest, render(result, parseUnquotedProperties(*unquotedProperties)))
 		if err != nil {
 			log.Fatalf("Error when copying file %q: %v", dest, err)
 		}
 	}
+}
+
+func parseUnquotedProperties(param string) []string {
+	if param == "" {
+		return []string{}
+	}
+	return strings.Split(param, ",")
 }
 
 func render(p page, dontQuote []string) string {
