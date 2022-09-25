@@ -8,7 +8,7 @@ Tool to take raw logseq Markdown files and turn them into a blog posts with fron
 - [x] add title and slug to the front matter
 - [x] translate all other page attributes to front matter
 - [x] remove top level bullet points
-- [ ] "post" or "book" type - focus on page
+- [x] "post" or "book" type - focus on posts
 - [ ] copy folder structure of my blog (store posts in content/posts)
 - [ ] handle categories array in front matter
 - [ ] merge blog with the generated folder

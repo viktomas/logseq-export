@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
+
+const defaultFolder = "posts" // TODO configure default folder
 
 func sanitizeName(orig string) string {
 	return strings.ReplaceAll(orig, " ", "-")
@@ -76,6 +79,10 @@ func applyAll(from string, transformers ...func(string) string) string {
 
 func transformPage(p page) page {
 	filename := generateFileName(p.filename, p.attributes)
+	folder, ok := p.attributes["folder"]
+	if !ok {
+		folder = defaultFolder
+	}
 	text := applyAll(
 		p.text,
 		removeEmptyBulletPoints,
@@ -85,7 +92,7 @@ func transformPage(p page) page {
 		removeTabFromMultiLevelBulletPoints,
 	)
 	return page{
-		filename:   filename,
+		filename:   filepath.Join(folder, filename),
 		attributes: p.attributes,
 		text:       text,
 	}

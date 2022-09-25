@@ -86,6 +86,11 @@ func main() {
 		page := parsePage(name, srcContent)
 		result := transformPage(page)
 		dest := filepath.Join(exportFolder, result.filename)
+		folder, _ := filepath.Split(dest)
+		err = os.MkdirAll(folder, os.ModePerm)
+		if err != nil {
+			log.Fatalf("Error when creating parent directory for %q: %v", dest, err)
+		}
 		err = writeStringToFile(dest, render(result, []string{"date", "slug"}))
 		if err != nil {
 			log.Fatalf("Error when copying file %q: %v", dest, err)
