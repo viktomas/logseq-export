@@ -92,12 +92,17 @@ func parseUnquotedProperties(param string) []string {
 }
 
 func render(p page, dontQuote []string) string {
+	sortedKeys := make([]string, 0, len(p.attributes))
+	for k := range p.attributes {
+		sortedKeys = append(sortedKeys, k)
+	}
+	slices.Sort(sortedKeys)
 	attributeBuilder := strings.Builder{}
-	for name, value := range p.attributes {
-		if slices.Contains(dontQuote, name) {
-			attributeBuilder.WriteString(fmt.Sprintf("%s: %s\n", name, value))
+	for _, key := range sortedKeys {
+		if slices.Contains(dontQuote, key) {
+			attributeBuilder.WriteString(fmt.Sprintf("%s: %s\n", key, p.attributes[key]))
 		} else {
-			attributeBuilder.WriteString(fmt.Sprintf("%s: %q\n", name, value))
+			attributeBuilder.WriteString(fmt.Sprintf("%s: %q\n", key, p.attributes[key]))
 		}
 	}
 	return fmt.Sprintf("---\n%s---\n%s", attributeBuilder.String(), p.text)

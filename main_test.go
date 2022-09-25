@@ -23,6 +23,28 @@ second: "2"
 ---
 page text`, result)
 	})
+	t.Run("it renders attributes in alphabetical order", func(t *testing.T) {
+		testPage := page{
+			filename: "",
+			attributes: map[string]string{
+				"e": "1",
+				"d": "1",
+				"c": "1",
+				"b": "1",
+				"a": "1",
+			},
+			text: "page text",
+		}
+		result := render(testPage, []string{})
+		require.Equal(t, `---
+a: "1"
+b: "1"
+c: "1"
+d: "1"
+e: "1"
+---
+page text`, result)
+	})
 	t.Run("it renders attributes without quotes", func(t *testing.T) {
 		testPage := page{
 			filename: "",
