@@ -24,7 +24,8 @@ logseq-extractor
 - `public` - as soon as this page property is present (regardless of value), the page gets exported
 - `slug` used as a file name
 - `date` it's used as a file name prefix
-- `folder` the page is going to be exported in this subfolder
+- `folder` the page is going to be exported in this subfolder e.g. `content/posts`
+  - the `folder` property always uses `/` (forward slash) but on Windows, it gets translated to `\` in folder path
   - if the base export folder is `a` and the `folder` page property is `b/c`, then the resulting page will be in `a/b/c` folder
 
 

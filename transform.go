@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -77,7 +78,7 @@ func applyAll(from string, transformers ...func(string) string) string {
 
 func transformPage(p page) page {
 	filename := generateFileName(p.filename, p.attributes)
-	folder := p.attributes["folder"]
+	folder := filepath.Join(path.Split(p.attributes["folder"])) // the page property always uses `/` but the final delimiter is OS-dependent
 	text := applyAll(
 		p.text,
 		removeEmptyBulletPoints,

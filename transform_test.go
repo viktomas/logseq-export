@@ -65,12 +65,12 @@ func TestTransformPage(t *testing.T) {
 		testPage := page{
 			filename: "name with space.md",
 			attributes: map[string]string{
-				"folder": "posts",
+				"folder": "content/posts",
 			},
 			text: "",
 		}
 		result := transformPage(testPage)
-		require.Equal(t, filepath.Join("posts", "name-with-space.md"), result.filename)
+		require.Equal(t, filepath.Join("content", "posts", "name-with-space.md"), result.filename)
 	})
 
 	t.Run("removes dashes with no text after them", func(t *testing.T) {
