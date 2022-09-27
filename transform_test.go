@@ -116,3 +116,24 @@ in
 one`, result)
 	})
 }
+
+func TestTransformImages(t *testing.T) {
+	t.Run("extracts relative images", func(t *testing.T) {
+		testPage := page{
+			filename: "a.md",
+			text:     "- ![hello world](../assets/image.png)",
+		}
+		result := transformPage(testPage)
+		require.Equal(t, []string{"../assets/image.png"}, result.assets)
+		require.Equal(t, "\n![hello world](../assets/image.png)", result.text)
+	})
+	t.Run("ignores absolute images", func(t *testing.T) {
+		testPage := page{
+			filename: "a.md",
+			text:     "- ![hello world](http://example.com/assets/image.png)",
+		}
+		result := transformPage(testPage)
+		require.Equal(t, 0, len(result.assets))
+		require.Equal(t, "\n![hello world](http://example.com/assets/image.png)", result.text)
+	})
+}

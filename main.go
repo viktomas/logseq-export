@@ -16,6 +16,7 @@ import (
 type page struct {
 	filename   string
 	attributes map[string]string
+	assets     []string
 	text       string
 }
 

@@ -76,6 +76,15 @@ func applyAll(from string, transformers ...func(string) string) string {
 	return result
 }
 
+func extractAssets(p page) []string {
+	links := regexp.MustCompile(`!\[.*?]\((\.\.?/.+?)\)`).FindAllStringSubmatch(p.text, -1)
+	result := make([]string, 0, len(links))
+	for _, l := range links {
+		result = append(result, l[1])
+	}
+	return result
+}
+
 func transformPage(p page) page {
 	filename := generateFileName(p.filename, p.attributes)
 	folder := filepath.Join(path.Split(p.attributes["folder"])) // the page property always uses `/` but the final delimiter is OS-dependent
@@ -90,6 +99,7 @@ func transformPage(p page) page {
 	return page{
 		filename:   filepath.Join(folder, filename),
 		attributes: p.attributes,
+		assets:     extractAssets(p),
 		text:       text,
 	}
 }
