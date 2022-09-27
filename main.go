@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"golang.org/x/exp/slices"
@@ -20,13 +21,24 @@ type page struct {
 	text       string
 }
 
-func findMatchingFiles(rootPath string, substring string) ([]string, error) {
+/*
+findMatchingFiles finds all files in rootPath that contain substring
+ignoreRegexp is an expression that is evaluated on **relative** path of files within the graph (e.g. `.git/HEAD` or `logseq/.bkp/something.md`) if it matches, the file is not processed
+*/
+func findMatchingFiles(rootPath string, substring string, ignoreRegexp *regexp.Regexp) ([]string, error) {
 	var result []string
 	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, walkError error) error {
 		if walkError != nil {
 			return walkError
 		}
 		if d.IsDir() {
+			return nil
+		}
+		relativePath, err := filepath.Rel(rootPath, path)
+		if err != nil {
+			return err
+		}
+		if ignoreRegexp.MatchString(filepath.ToSlash(relativePath)) {
 			return nil
 		}
 		file, err := os.OpenFile(path, os.O_RDONLY, os.ModePerm)
@@ -62,7 +74,7 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	publicFiles, err := findMatchingFiles(*graphPath, "public::")
+	publicFiles, err := findMatchingFiles(*graphPath, "public::", regexp.MustCompile(`^(logseq|.git)/`))
 	if err != nil {
 		log.Fatalf("Error during walking through a folder %v", err)
 	}
