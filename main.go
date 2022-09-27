@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
-	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -54,8 +53,8 @@ func findMatchingFiles(rootPath string, substring string) ([]string, error) {
 func main() {
 	graphPath := flag.String("graphPath", "", "[MANDATORY] Folder where all public pages are exported.")
 	blogFolder := flag.String("blogFolder", "", "[MANDATORY] Folder where this program creates a new subfolder with public logseq pages.")
-	assetsRelativePath := flag.String("assetsRelativePath", "", "relative path within blogFolder where the assets (images) should be stored (e.g. 'static/logseq')")
-	imagePathPrefix := flag.String("imagePathPrefix", "", "path that the images are going to be served on on the web (e.g. '/public/images/logseq')")
+	assetsRelativePath := flag.String("assetsRelativePath", "logseq-images", "relative path within blogFolder where the assets (images) should be stored (e.g. 'static/images/logseq'). Default is `logseq-images`")
+	imagePathPrefix := flag.String("imagePathPrefix", "/logseq-images", "path that the images are going to be served on on the web (e.g. '/public/images/logseq'). Default is `/logseq-images`")
 	unquotedProperties := flag.String("unquotedProperties", "", "comma-separated list of logseq page properties that won't be quoted in the markdown front matter, e.g. 'date,public,slug")
 	flag.Parse()
 	if *graphPath == "" || *blogFolder == "" {
@@ -76,10 +75,6 @@ func main() {
 		page := parsePage(name, srcContent)
 		result := transformPage(page, *imagePathPrefix)
 		assetFolder := filepath.Join(*blogFolder, *assetsRelativePath)
-		err = os.MkdirAll(assetFolder, os.ModePerm)
-		if err != nil {
-			log.Fatalf("Error when making assets folder %q: %v", assetFolder, err)
-		}
 		err = copyAssets(publicFile, assetFolder, result.assets)
 		if err != nil {
 			log.Fatalf("Error when copying assets for page %q: %v", publicFile, err)
@@ -98,6 +93,10 @@ func main() {
 }
 
 func copyAssets(baseFile string, assetFolder string, assets []string) error {
+	err := os.MkdirAll(assetFolder, os.ModePerm)
+	if err != nil {
+		log.Fatalf("Error when making assets folder %q: %v", assetFolder, err)
+	}
 	baseDir, _ := filepath.Split(baseFile)
 	for _, relativeAssetPath := range assets {
 		assetPath := filepath.Clean(filepath.Join(baseDir, relativeAssetPath))
@@ -133,51 +132,4 @@ func render(p page, dontQuote []string) string {
 		}
 	}
 	return fmt.Sprintf("---\n%s---\n%s", attributeBuilder.String(), p.text)
-}
-
-func readFileToString(src string) (string, error) {
-	srcFile, err := os.Open(src)
-	if err != nil {
-		return "", err
-	}
-	defer srcFile.Close()
-	bytes, err := os.ReadFile(src)
-	if err != nil {
-		return "", err
-	}
-	return string(bytes), nil
-}
-
-func writeStringToFile(dest string, content string) error {
-	err := os.WriteFile(dest, []byte(content), os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func copy(src, dest string) error {
-	srcFile, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer srcFile.Close()
-
-	destFile, err := os.Create(dest) // creates if file doesn't exist
-	if err != nil {
-		return err
-	}
-	defer destFile.Close()
-
-	_, err = io.Copy(destFile, srcFile) // check first var for number of bytes copied
-	if err != nil {
-		return err
-	}
-
-	err = destFile.Sync()
-	if err != nil {
-		return err
-	}
-	return nil
 }

@@ -75,6 +75,7 @@ func unindentMultilineStrings(from string) string {
 	})
 }
 
+// onlyText turns text transformer into a page transformer
 func onlyText(textTransformer func(string) string) func(page) page {
 	return func(p page) page {
 		p.text = textTransformer(p.text)
@@ -90,6 +91,11 @@ func applyAll(from page, transformers ...func(page) page) page {
 	return result
 }
 
+/*
+extractAssets finds all markdown images with **relative** URL e.g. `![alt](../assets/image.png)`
+it extracts the relative URL into a `page.assets“ array
+it replaces the relative links with `imagePrefixPath“: `{imagePrefixPath}/image.png`
+*/
 func extractAssets(imagePrefixPath string) func(page) page {
 	return func(p page) page {
 		assetRegexp := regexp.MustCompile(`!\[.*?]\((\.\.?/.+?)\)`)
