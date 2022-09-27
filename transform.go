@@ -117,7 +117,7 @@ func extractAssets(imagePrefixPath string) func(page) page {
 	}
 }
 
-func transformPage(p page, imagePathPrefix string) page {
+func transformPage(p page, webAssetsPathPrefix string) page {
 	return applyAll(
 		p,
 		addFileName,
@@ -126,6 +126,6 @@ func transformPage(p page, imagePathPrefix string) page {
 		onlyText(firstBulletPointsToParagraphs),
 		onlyText(secondToFirstBulletPoints),
 		onlyText(removeTabFromMultiLevelBulletPoints),
-		extractAssets(imagePathPrefix),
+		extractAssets(webAssetsPathPrefix),
 	)
 }

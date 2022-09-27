@@ -54,7 +54,7 @@ func main() {
 	graphPath := flag.String("graphPath", "", "[MANDATORY] Folder where all public pages are exported.")
 	blogFolder := flag.String("blogFolder", "", "[MANDATORY] Folder where this program creates a new subfolder with public logseq pages.")
 	assetsRelativePath := flag.String("assetsRelativePath", "logseq-images", "relative path within blogFolder where the assets (images) should be stored (e.g. 'static/images/logseq'). Default is `logseq-images`")
-	imagePathPrefix := flag.String("imagePathPrefix", "/logseq-images", "path that the images are going to be served on on the web (e.g. '/public/images/logseq'). Default is `/logseq-images`")
+	webAssetsPathPrefix := flag.String("webAssetsPathPrefix", "/logseq-images", "path that the images are going to be served on on the web (e.g. '/public/images/logseq'). Default is `/logseq-images`")
 	unquotedProperties := flag.String("unquotedProperties", "", "comma-separated list of logseq page properties that won't be quoted in the markdown front matter, e.g. 'date,public,slug")
 	flag.Parse()
 	if *graphPath == "" || *blogFolder == "" {
@@ -73,7 +73,7 @@ func main() {
 		}
 		_, name := filepath.Split(publicFile)
 		page := parsePage(name, srcContent)
-		result := transformPage(page, *imagePathPrefix)
+		result := transformPage(page, *webAssetsPathPrefix)
 		assetFolder := filepath.Join(*blogFolder, *assetsRelativePath)
 		err = copyAssets(publicFile, assetFolder, result.assets)
 		if err != nil {

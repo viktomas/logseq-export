@@ -20,9 +20,28 @@ logseq-export
         [MANDATORY] Folder where all public pages are exported.
   -graphPath string
         [MANDATORY] Path to the root of your logseq graph containing /pages and /journals directories.
+  -assetsRelativePath
+        relative path within blogFolder where the assets (images) should be stored (e.g. 'static/images/logseq'). Default is logseq-images (default "logseq-images")
+  -webAssetsPathPrefix
+    	  path that the images are going to be served on on the web (e.g. '/public/images/logseq'). Default is /logseq-images (default "/logseq-images")
   -unquotedProperties string
         comma-separated list of logseq page properties that won't be quoted in the markdown frontmatter, e.g. 'date,public,slug'
 ```
+
+#### Command example
+
+This is how I run the command on my machine:
+
+```sh
+logseq-export \
+  --graphPath /Users/tomas/workspace/private/notes \
+  --blogFolder /Users/tomas/workspace/private/blog \
+  --unquotedProperties date,slug,public,tags \
+  --assetsRelativePath static/images/logseq \
+  --webAssetsPathPrefix /images/logseq
+```
+
+This will take my logseq notes and copies them to blog, it will also copy all the images to `/Users/tomas/workspace/private/blog/static/images/logseq`, but the image links themselves are going to have `/images/logseq` prefix (`![alt](/images/logseq/image.png)`).
 
 ### Logseq page properties with a special meaning (all optional)
 
