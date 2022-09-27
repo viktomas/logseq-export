@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"flag"
 	"fmt"
+	"io"
 	"io/fs"
 	"log"
 	"os"
@@ -53,6 +54,8 @@ func findMatchingFiles(rootPath string, substring string) ([]string, error) {
 func main() {
 	graphPath := flag.String("graphPath", "", "[MANDATORY] Folder where all public pages are exported.")
 	blogFolder := flag.String("blogFolder", "", "[MANDATORY] Folder where this program creates a new subfolder with public logseq pages.")
+	assetsRelativePath := flag.String("assetsRelativePath", "", "relative path within blogFolder where the assets (images) should be stored (e.g. 'static/logseq')")
+	imagePathPrefix := flag.String("imagePathPrefix", "", "path that the images are going to be served on on the web (e.g. '/public/images/logseq')")
 	unquotedProperties := flag.String("unquotedProperties", "", "comma-separated list of logseq page properties that won't be quoted in the markdown front matter, e.g. 'date,public,slug")
 	flag.Parse()
 	if *graphPath == "" || *blogFolder == "" {
@@ -71,7 +74,16 @@ func main() {
 		}
 		_, name := filepath.Split(publicFile)
 		page := parsePage(name, srcContent)
-		result := transformPage(page, "") // TODO add the --imagePathPrefix attribute
+		result := transformPage(page, *imagePathPrefix)
+		assetFolder := filepath.Join(*blogFolder, *assetsRelativePath)
+		err = os.MkdirAll(assetFolder, os.ModePerm)
+		if err != nil {
+			log.Fatalf("Error when making assets folder %q: %v", assetFolder, err)
+		}
+		err = copyAssets(publicFile, assetFolder, result.assets)
+		if err != nil {
+			log.Fatalf("Error when copying assets for page %q: %v", publicFile, err)
+		}
 		dest := filepath.Join(*blogFolder, result.filename)
 		folder, _ := filepath.Split(dest)
 		err = os.MkdirAll(folder, os.ModePerm)
@@ -83,6 +95,20 @@ func main() {
 			log.Fatalf("Error when copying file %q: %v", dest, err)
 		}
 	}
+}
+
+func copyAssets(baseFile string, assetFolder string, assets []string) error {
+	baseDir, _ := filepath.Split(baseFile)
+	for _, relativeAssetPath := range assets {
+		assetPath := filepath.Clean(filepath.Join(baseDir, relativeAssetPath))
+		_, assetName := filepath.Split(assetPath)
+		destPath := filepath.Join(assetFolder, assetName)
+		err := copy(assetPath, destPath)
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func parseUnquotedProperties(param string) []string {
@@ -128,5 +154,30 @@ func writeStringToFile(dest string, content string) error {
 		return err
 	}
 
+	return nil
+}
+
+func copy(src, dest string) error {
+	srcFile, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer srcFile.Close()
+
+	destFile, err := os.Create(dest) // creates if file doesn't exist
+	if err != nil {
+		return err
+	}
+	defer destFile.Close()
+
+	_, err = io.Copy(destFile, srcFile) // check first var for number of bytes copied
+	if err != nil {
+		return err
+	}
+
+	err = destFile.Sync()
+	if err != nil {
+		return err
+	}
 	return nil
 }
