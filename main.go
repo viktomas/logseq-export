@@ -71,7 +71,7 @@ func main() {
 		}
 		_, name := filepath.Split(publicFile)
 		page := parsePage(name, srcContent)
-		result := transformPage(page)
+		result := transformPage(page, "") // TODO add the --imagePathPrefix attribute
 		dest := filepath.Join(*blogFolder, result.filename)
 		folder, _ := filepath.Split(dest)
 		err = os.MkdirAll(folder, os.ModePerm)

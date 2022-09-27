@@ -25,6 +25,13 @@ func generateFileName(originalName string, attributes map[string]string) string 
 	return fmt.Sprintf("%s%s.md", date, attributes["slug"])
 }
 
+func addFileName(p page) page {
+	filename := generateFileName(p.filename, p.attributes)
+	folder := filepath.Join(path.Split(p.attributes["folder"])) // the page property always uses `/` but the final delimiter is OS-dependent
+	p.filename = filepath.Join(folder, filename)
+	return p
+}
+
 func removeEmptyBulletPoints(from string) string {
 	return regexp.MustCompile(`(?m:^\s*-\s*$)`).ReplaceAllString(from, "")
 }
@@ -68,7 +75,14 @@ func unindentMultilineStrings(from string) string {
 	})
 }
 
-func applyAll(from string, transformers ...func(string) string) string {
+func onlyText(textTransformer func(string) string) func(page) page {
+	return func(p page) page {
+		p.text = textTransformer(p.text)
+		return p
+	}
+}
+
+func applyAll(from page, transformers ...func(page) page) page {
 	result := from
 	for _, t := range transformers {
 		result = t(result)
@@ -76,30 +90,36 @@ func applyAll(from string, transformers ...func(string) string) string {
 	return result
 }
 
-func extractAssets(p page) []string {
-	links := regexp.MustCompile(`!\[.*?]\((\.\.?/.+?)\)`).FindAllStringSubmatch(p.text, -1)
-	result := make([]string, 0, len(links))
-	for _, l := range links {
-		result = append(result, l[1])
+func extractAssets(imagePrefixPath string) func(page) page {
+	return func(p page) page {
+		assetRegexp := regexp.MustCompile(`!\[.*?]\((\.\.?/.+?)\)`)
+		links := assetRegexp.FindAllStringSubmatch(p.text, -1)
+		assets := make([]string, 0, len(links))
+		for _, l := range links {
+			assets = append(assets, l[1])
+		}
+		p.assets = assets
+		textWithAssets := assetRegexp.ReplaceAllStringFunc(p.text, func(s string) string {
+			match := assetRegexp.FindStringSubmatch(s)
+			originalURL := match[1]
+			_, assetName := path.Split(originalURL)
+			newURL := path.Join(imagePrefixPath, assetName)
+			return strings.Replace(s, originalURL, newURL, 1)
+		})
+		p.text = textWithAssets
+		return p
 	}
-	return result
 }
 
-func transformPage(p page) page {
-	filename := generateFileName(p.filename, p.attributes)
-	folder := filepath.Join(path.Split(p.attributes["folder"])) // the page property always uses `/` but the final delimiter is OS-dependent
-	text := applyAll(
-		p.text,
-		removeEmptyBulletPoints,
-		unindentMultilineStrings,
-		firstBulletPointsToParagraphs,
-		secondToFirstBulletPoints,
-		removeTabFromMultiLevelBulletPoints,
+func transformPage(p page, imagePathPrefix string) page {
+	return applyAll(
+		p,
+		addFileName,
+		onlyText(removeEmptyBulletPoints),
+		onlyText(unindentMultilineStrings),
+		onlyText(firstBulletPointsToParagraphs),
+		onlyText(secondToFirstBulletPoints),
+		onlyText(removeTabFromMultiLevelBulletPoints),
+		extractAssets(imagePathPrefix),
 	)
-	return page{
-		filename:   filepath.Join(folder, filename),
-		attributes: p.attributes,
-		assets:     extractAssets(p),
-		text:       text,
-	}
 }

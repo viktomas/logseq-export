@@ -43,7 +43,7 @@ func transformText(from string) string {
 		attributes: map[string]string{},
 		text:       from,
 	}
-	result := transformPage(testPage)
+	result := transformPage(testPage, "")
 	return result.text
 }
 
@@ -57,7 +57,7 @@ func TestTransformPage(t *testing.T) {
 			},
 			text: "",
 		}
-		result := transformPage(testPage)
+		result := transformPage(testPage, "")
 		require.Equal(t, "2022-09-24-this-is-a-slug.md", result.filename)
 	})
 
@@ -69,7 +69,7 @@ func TestTransformPage(t *testing.T) {
 			},
 			text: "",
 		}
-		result := transformPage(testPage)
+		result := transformPage(testPage, "")
 		require.Equal(t, filepath.Join("content", "posts", "name-with-space.md"), result.filename)
 	})
 
@@ -123,16 +123,16 @@ func TestTransformImages(t *testing.T) {
 			filename: "a.md",
 			text:     "- ![hello world](../assets/image.png)",
 		}
-		result := transformPage(testPage)
+		result := transformPage(testPage, "/images")
 		require.Equal(t, []string{"../assets/image.png"}, result.assets)
-		require.Equal(t, "\n![hello world](../assets/image.png)", result.text)
+		require.Equal(t, "\n![hello world](/images/image.png)", result.text)
 	})
 	t.Run("ignores absolute images", func(t *testing.T) {
 		testPage := page{
 			filename: "a.md",
 			text:     "- ![hello world](http://example.com/assets/image.png)",
 		}
-		result := transformPage(testPage)
+		result := transformPage(testPage, "/images")
 		require.Equal(t, 0, len(result.assets))
 		require.Equal(t, "\n![hello world](http://example.com/assets/image.png)", result.text)
 	})
