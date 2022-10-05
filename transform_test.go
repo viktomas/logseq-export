@@ -149,6 +149,7 @@ func TestTransformImages(t *testing.T) {
 		require.Equal(t, []string{"../assets/image.png"}, result.assets)
 		require.Equal(t, "\n![hello world](/images/image.png)", result.text)
 	})
+
 	t.Run("ignores absolute images", func(t *testing.T) {
 		testPage := page{
 			filename: "a.md",
@@ -158,4 +159,31 @@ func TestTransformImages(t *testing.T) {
 		require.Equal(t, 0, len(result.assets))
 		require.Equal(t, "\n![hello world](http://example.com/assets/image.png)", result.text)
 	})
+
+	t.Run("extracts relative images from image attribute", func(t *testing.T) {
+		testPage := page{
+			attributes: map[string]string{
+				"image": "../assets/image.png",
+			},
+			filename: "a.md",
+			text:     "",
+		}
+		result := transformPage(testPage, "/images")
+		require.Equal(t, []string{"../assets/image.png"}, result.assets)
+		require.Equal(t, "/images/image.png", result.attributes["image"])
+	})
+
+	t.Run("ignores absolute images in image attribute", func(t *testing.T) {
+		testPage := page{
+			attributes: map[string]string{
+				"image": "http://example.com/assets/image.png",
+			},
+			filename: "a.md",
+			text:     "",
+		}
+		result := transformPage(testPage, "/images")
+		require.Equal(t, 0, len(result.assets))
+		require.Equal(t, "http://example.com/assets/image.png", result.attributes["image"])
+	})
+
 }

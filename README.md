@@ -51,7 +51,8 @@ This will take my logseq notes and copies them to blog, it will also copy all th
 - `folder` the page is going to be exported in this subfolder e.g. `content/posts`
   - the `folder` property always uses `/` (forward slash) but on Windows, it gets translated to `\` in folder path
   - if the base export folder is `a` and the `folder` page property is `b/c`, then the resulting page will be in `a/b/c` folder
-
+- `image` The value of this property behaves the same way as all Markdown images.
+  - if the `image` property contains `../assets/post-image.jpg`, and we run the `logseq-extract` with `--webAssetsPathPrefix /images/logseq -assetsRelativePath static/images/logseq` flags, the resulting Markdown post will have front-matter attribute `image: /images/logseq/post-image.jpg` and the image will be copied to `static/images/logseq/post-image.jpg` in the blog folder.
 
 ## From
 
