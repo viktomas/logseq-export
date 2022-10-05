@@ -48,6 +48,28 @@ func transformText(from string) string {
 }
 
 func TestTransformPage(t *testing.T) {
+	t.Run("adds filename as title if it is missing", func(t *testing.T) {
+		testPage := page{
+			filename:   "name with space.md",
+			attributes: map[string]string{},
+			text:       "",
+		}
+		result := transformPage(testPage, "")
+		require.Equal(t, "name with space", result.attributes["title"])
+	})
+
+	t.Run("uses title page property if present", func(t *testing.T) {
+		testPage := page{
+			filename: "name with space.md",
+			attributes: map[string]string{
+				"title": "title from page prop",
+			},
+			text: "",
+		}
+		result := transformPage(testPage, "")
+		require.Equal(t, "title from page prop", result.attributes["title"])
+	})
+
 	t.Run("generates filename", func(t *testing.T) {
 		testPage := page{
 			filename: "name with space.md",

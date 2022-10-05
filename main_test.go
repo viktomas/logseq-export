@@ -6,6 +6,12 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+func TestFindMatchingFiles(t *testing.T) {
+	t.Run("it finds files with 'public::' string in them", func(t *testing.T) {
+
+	})
+}
+
 func TestRender(t *testing.T) {
 	t.Run("it renders attributes as quoted strings", func(t *testing.T) {
 		testPage := page{

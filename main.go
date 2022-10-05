@@ -63,7 +63,7 @@ func findMatchingFiles(rootPath string, substring string, ignoreRegexp *regexp.R
 }
 
 func main() {
-	graphPath := flag.String("graphPath", "", "[MANDATORY] Folder where all public pages are exported.")
+	graphPath := flag.String("graphPath", "", "[MANDATORY] Folder where all public pages are exported.") // TODO rename graphPath -> graphFolder or maybe logseqFolder
 	blogFolder := flag.String("blogFolder", "", "[MANDATORY] Folder where this program creates a new subfolder with public logseq pages.")
 	assetsRelativePath := flag.String("assetsRelativePath", "logseq-images", "relative path within blogFolder where the assets (images) should be stored (e.g. 'static/images/logseq'). Default is `logseq-images`")
 	webAssetsPathPrefix := flag.String("webAssetsPathPrefix", "/logseq-images", "path that the images are going to be served on on the web (e.g. '/public/images/logseq'). Default is `/logseq-images`")

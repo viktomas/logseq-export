@@ -25,6 +25,13 @@ func generateFileName(originalName string, attributes map[string]string) string 
 	return fmt.Sprintf("%s%s.md", date, attributes["slug"])
 }
 
+func addTitleIfMissing(p page) page {
+	if p.attributes["title"] == "" {
+		p.attributes["title"] = regexp.MustCompile(`\.[^.]*$`).ReplaceAllString(p.filename, "")
+	}
+	return p
+}
+
 func addFileName(p page) page {
 	filename := generateFileName(p.filename, p.attributes)
 	folder := filepath.Join(path.Split(p.attributes["folder"])) // the page property always uses `/` but the final delimiter is OS-dependent
@@ -118,8 +125,12 @@ func extractAssets(imagePrefixPath string) func(page) page {
 }
 
 func transformPage(p page, webAssetsPathPrefix string) page {
+	if p.attributes == nil {
+		p.attributes = map[string]string{}
+	}
 	return applyAll(
 		p,
+		addTitleIfMissing,
 		addFileName,
 		onlyText(removeEmptyBulletPoints),
 		onlyText(unindentMultilineStrings),
