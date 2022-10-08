@@ -11,6 +11,7 @@ import (
 	"regexp"
 	"strings"
 
+	"github.com/spf13/afero"
 	"golang.org/x/exp/slices"
 )
 
@@ -25,23 +26,23 @@ type page struct {
 findMatchingFiles finds all files in rootPath that contain substring
 ignoreRegexp is an expression that is evaluated on **relative** path of files within the graph (e.g. `.git/HEAD` or `logseq/.bkp/something.md`) if it matches, the file is not processed
 */
-func findMatchingFiles(rootPath string, substring string, ignoreRegexp *regexp.Regexp) ([]string, error) {
+func findMatchingFiles(appFS afero.Fs, rootPath string, substring string, ignoreRegexp *regexp.Regexp) ([]string, error) {
 	var result []string
-	err := filepath.WalkDir(rootPath, func(path string, d fs.DirEntry, walkError error) error {
+	err := afero.Walk(appFS, rootPath, func(path string, info fs.FileInfo, walkError error) error {
 		if walkError != nil {
 			return walkError
 		}
-		if d.IsDir() {
+		if info.IsDir() {
 			return nil
 		}
 		relativePath, err := filepath.Rel(rootPath, path)
 		if err != nil {
 			return err
 		}
-		if ignoreRegexp.MatchString(filepath.ToSlash(relativePath)) {
+		if ignoreRegexp != nil && ignoreRegexp.MatchString(filepath.ToSlash(relativePath)) {
 			return nil
 		}
-		file, err := os.OpenFile(path, os.O_RDONLY, os.ModePerm)
+		file, err := appFS.OpenFile(path, os.O_RDONLY, os.ModePerm)
 		if err != nil {
 			return err
 		}
@@ -74,7 +75,8 @@ func main() {
 		flag.Usage()
 		os.Exit(1)
 	}
-	publicFiles, err := findMatchingFiles(*graphPath, "public::", regexp.MustCompile(`^(logseq|.git)/`))
+	appFS := afero.NewOsFs()
+	publicFiles, err := findMatchingFiles(appFS, *graphPath, "public::", regexp.MustCompile(`^(logseq|.git)/`))
 	if err != nil {
 		log.Fatalf("Error during walking through a folder %v", err)
 	}
