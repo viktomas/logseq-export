@@ -1,6 +1,7 @@
 package main
 
 import (
+	"path/filepath"
 	"regexp"
 	"testing"
 
@@ -23,14 +24,18 @@ func TestFindMatchingFiles(t *testing.T) {
 		matchingFiles, err := findMatchingFiles(appFS, "/src", "public::", nil)
 
 		require.Nil(t, err)
-		require.Equal(t, []string{"/src/.git/a", "/src/a/b", "/src/logseq/a"}, matchingFiles)
+		require.Equal(t, []string{
+			filepath.Join("/src", ".git", "a"),
+			filepath.Join("/src", "a", "b"),
+			filepath.Join("/src", "logseq", "a"),
+		}, matchingFiles)
 	})
 
 	t.Run("it ignores files based on the ignoreRegex", func(t *testing.T) {
 		matchingFiles, err := findMatchingFiles(appFS, "/src", "public::", regexp.MustCompile(`^(logseq|.git)/`))
 
 		require.Nil(t, err)
-		require.Equal(t, []string{"/src/a/b"}, matchingFiles)
+		require.Equal(t, []string{filepath.Join("/src", "a", "b")}, matchingFiles)
 	})
 }
 
