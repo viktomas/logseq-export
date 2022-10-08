@@ -80,34 +80,44 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error during walking through a folder %v", err)
 	}
+	puq := parseUnquotedProperties(*unquotedProperties)
 	for _, publicFile := range publicFiles {
-		srcContent, err := readFileToString(publicFile)
+		err = exportPublicPage(appFS, publicFile, *webAssetsPathPrefix, *blogFolder, *assetsRelativePath, puq)
 		if err != nil {
-			log.Fatalf("Error when reading the %q file: %v", publicFile, err)
-		}
-		_, name := filepath.Split(publicFile)
-		page := parsePage(name, srcContent)
-		result := transformPage(page, *webAssetsPathPrefix)
-		assetFolder := filepath.Join(*blogFolder, *assetsRelativePath)
-		err = copyAssets(publicFile, assetFolder, result.assets)
-		if err != nil {
-			log.Fatalf("Error when copying assets for page %q: %v", publicFile, err)
-		}
-		dest := filepath.Join(*blogFolder, result.filename)
-		folder, _ := filepath.Split(dest)
-		err = os.MkdirAll(folder, os.ModePerm)
-		if err != nil {
-			log.Fatalf("Error when creating parent directory for %q: %v", dest, err)
-		}
-		err = writeStringToFile(dest, render(result, parseUnquotedProperties(*unquotedProperties)))
-		if err != nil {
-			log.Fatalf("Error when copying file %q: %v", dest, err)
+			log.Fatalf("Error when exporting page %q: %v", publicFile, err)
 		}
 	}
 }
 
-func copyAssets(baseFile string, assetFolder string, assets []string) error {
-	err := os.MkdirAll(assetFolder, os.ModePerm)
+func exportPublicPage(appFS afero.Fs, publicFile string, webAssetsPathPrefix string, blogFolder string, assetsRelativePath string, unquotedProperties []string) error {
+	srcContent, err := afero.ReadFile(appFS, publicFile)
+	if err != nil {
+		return fmt.Errorf("reading the %q file failed: %v", publicFile, err)
+	}
+	_, name := filepath.Split(publicFile)
+	page := parsePage(name, string(srcContent))
+	result := transformPage(page, webAssetsPathPrefix)
+	assetFolder := filepath.Join(blogFolder, assetsRelativePath)
+	err = copyAssets(appFS, publicFile, assetFolder, result.assets)
+	if err != nil {
+		return fmt.Errorf("copying assets for page %q failed: %v", publicFile, err)
+	}
+	dest := filepath.Join(blogFolder, result.filename)
+	folder, _ := filepath.Split(dest)
+	err = appFS.MkdirAll(folder, os.ModePerm)
+	if err != nil {
+		return fmt.Errorf("creating parent directory for %q failed: %v", dest, err)
+	}
+	outputFileContent := render(result, unquotedProperties)
+	err = afero.WriteFile(appFS, dest, []byte(outputFileContent), 0644)
+	if err != nil {
+		return fmt.Errorf("copying file %q failed: %v", dest, err)
+	}
+	return nil
+}
+
+func copyAssets(appFS afero.Fs, baseFile string, assetFolder string, assets []string) error {
+	err := appFS.MkdirAll(assetFolder, os.ModePerm)
 	if err != nil {
 		log.Fatalf("Error when making assets folder %q: %v", assetFolder, err)
 	}
@@ -116,7 +126,7 @@ func copyAssets(baseFile string, assetFolder string, assets []string) error {
 		assetPath := filepath.Clean(filepath.Join(baseDir, relativeAssetPath))
 		_, assetName := filepath.Split(assetPath)
 		destPath := filepath.Join(assetFolder, assetName)
-		err := copy(assetPath, destPath)
+		err := copy(appFS, assetPath, destPath)
 		if err != nil {
 			return err
 		}

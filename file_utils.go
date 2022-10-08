@@ -2,39 +2,18 @@ package main
 
 import (
 	"io"
-	"os"
+
+	"github.com/spf13/afero"
 )
 
-func readFileToString(src string) (string, error) {
-	srcFile, err := os.Open(src)
-	if err != nil {
-		return "", err
-	}
-	defer srcFile.Close()
-	bytes, err := os.ReadFile(src)
-	if err != nil {
-		return "", err
-	}
-	return string(bytes), nil
-}
-
-func writeStringToFile(dest string, content string) error {
-	err := os.WriteFile(dest, []byte(content), os.ModePerm)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func copy(src, dest string) error {
-	srcFile, err := os.Open(src)
+func copy(appFS afero.Fs, src, dest string) error {
+	srcFile, err := appFS.Open(src)
 	if err != nil {
 		return err
 	}
 	defer srcFile.Close()
 
-	destFile, err := os.Create(dest) // creates if file doesn't exist
+	destFile, err := appFS.Create(dest) // creates if file doesn't exist
 	if err != nil {
 		return err
 	}
