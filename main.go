@@ -28,6 +28,7 @@ type exportOptions struct {
 	assetsRelativePath  string
 	webAssetsPathPrefix string
 	unquotedProperties  []string
+	listProperties      []string
 }
 
 /*
@@ -81,6 +82,7 @@ func parseOptions() exportOptions {
 	assetsRelativePath := flag.String("assetsRelativePath", "logseq-images", "relative path within blogFolder where the assets (images) should be stored (e.g. 'static/images/logseq'). Default is `logseq-images`")
 	webAssetsPathPrefix := flag.String("webAssetsPathPrefix", "/logseq-images", "path that the images are going to be served on on the web (e.g. '/public/images/logseq'). Default is `/logseq-images`")
 	rawUnquotedProperties := flag.String("unquotedProperties", "", "comma-separated list of logseq page properties that won't be quoted in the markdown front matter, e.g. 'date,public,slug")
+	rawListProperties := flag.String("listProperties", "", "comma-separated list of logseq page properties that should be converted to a list in the front matter, e.g. 'tags,series'")
 	flag.Parse()
 	if *graphPath == "" || *blogFolder == "" {
 		log.Println("mandatory argument is missing")
@@ -88,12 +90,14 @@ func parseOptions() exportOptions {
 		os.Exit(1)
 	}
 	unquotedProperties := parseUnquotedProperties(*rawUnquotedProperties)
+	listProperties := parseUnquotedProperties(*rawListProperties) // TODO reusing this - needs rename
 	return exportOptions{
 		graphPath:           *graphPath,
 		blogFolder:          *blogFolder,
 		assetsRelativePath:  *assetsRelativePath,
 		webAssetsPathPrefix: *webAssetsPathPrefix,
 		unquotedProperties:  unquotedProperties,
+		listProperties:      listProperties,
 	}
 }
 
@@ -131,7 +135,7 @@ func exportPublicPage(appFS afero.Fs, publicFile string, options exportOptions) 
 	if err != nil {
 		return fmt.Errorf("creating parent directory for %q failed: %v", dest, err)
 	}
-	outputFileContent := render(result, options.unquotedProperties)
+	outputFileContent := render(result, options.unquotedProperties, options.listProperties)
 	err = afero.WriteFile(appFS, dest, []byte(outputFileContent), 0644)
 	if err != nil {
 		return fmt.Errorf("copying file %q failed: %v", dest, err)
@@ -164,7 +168,7 @@ func parseUnquotedProperties(param string) []string {
 	return strings.Split(param, ",")
 }
 
-func render(p page, dontQuote []string) string {
+func render(p page, dontQuote []string, convertToList []string) string {
 	sortedKeys := make([]string, 0, len(p.attributes))
 	for k := range p.attributes {
 		sortedKeys = append(sortedKeys, k)
@@ -174,6 +178,9 @@ func render(p page, dontQuote []string) string {
 	for _, key := range sortedKeys {
 		if slices.Contains(dontQuote, key) {
 			attributeBuilder.WriteString(fmt.Sprintf("%s: %s\n", key, p.attributes[key]))
+		} else if slices.Contains(convertToList, key) {
+			listItems := strings.Split(p.attributes[key], ", ")
+			attributeBuilder.WriteString(fmt.Sprintf("%s: [\"%s\"]\n", key, strings.Join(listItems, "\", \"")))
 		} else {
 			attributeBuilder.WriteString(fmt.Sprintf("%s: %q\n", key, p.attributes[key]))
 		}
