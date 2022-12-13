@@ -89,8 +89,8 @@ func parseOptions() exportOptions {
 		flag.Usage()
 		os.Exit(1)
 	}
-	unquotedProperties := parseUnquotedProperties(*rawUnquotedProperties)
-	listProperties := parseUnquotedProperties(*rawListProperties) // TODO reusing this - needs rename
+	unquotedProperties := parsePropertyNames(*rawUnquotedProperties)
+	listProperties := parsePropertyNames(*rawListProperties)
 	return exportOptions{
 		graphPath:           *graphPath,
 		blogFolder:          *blogFolder,
@@ -161,7 +161,7 @@ func copyAssets(appFS afero.Fs, baseFile string, assetFolder string, assets []st
 	return nil
 }
 
-func parseUnquotedProperties(param string) []string {
+func parsePropertyNames(param string) []string {
 	if param == "" {
 		return []string{}
 	}
