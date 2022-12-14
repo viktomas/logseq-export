@@ -49,7 +49,7 @@ func TestRender(t *testing.T) {
 			},
 			text: "page text",
 		}
-		result := render(testPage, []string{})
+		result := render(testPage, []string{}, []string{})
 		require.Equal(t, `---
 first: "1"
 second: "2"
@@ -68,7 +68,7 @@ page text`, result)
 			},
 			text: "page text",
 		}
-		result := render(testPage, []string{})
+		result := render(testPage, []string{}, []string{})
 		require.Equal(t, `---
 a: "1"
 b: "1"
@@ -87,10 +87,26 @@ page text`, result)
 			},
 			text: "page text",
 		}
-		result := render(testPage, []string{"first", "second"})
+		result := render(testPage, []string{"first", "second"}, []string{})
 		require.Equal(t, `---
 first: 1
 second: 2
+---
+page text`, result)
+	})
+	t.Run("it renders formatted lists of attributes", func(t *testing.T) {
+		testPage := page{
+			filename: "",
+			attributes: map[string]string{
+				"first":  "single",
+				"second": "tag1, tag2",
+			},
+			text: "page text",
+		}
+		result := render(testPage, []string{}, []string{"first", "second"})
+		require.Equal(t, `---
+first: ["single"]
+second: ["tag1", "tag2"]
 ---
 page text`, result)
 	})

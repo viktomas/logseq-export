@@ -26,6 +26,8 @@ logseq-export
     	  path that the images are going to be served on on the web (e.g. '/public/images/logseq'). Default is /logseq-images (default "/logseq-images")
   -unquotedProperties string
         comma-separated list of logseq page properties that won't be quoted in the markdown frontmatter, e.g. 'date,public,slug'
+  --listProperties string
+        comma-separated list of logseq page properties that will be converted to a list in the mardown frontmatter, e.g. 'tags,series'
 ```
 
 #### Command example
