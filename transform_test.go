@@ -47,6 +47,7 @@ func transformText(from string) string {
 	return result.text
 }
 
+// TODO make sure that all transform text ends with \n (for better diffs)
 func TestTransformPage(t *testing.T) {
 	t.Run("adds filename as title if it is missing", func(t *testing.T) {
 		testPage := page{
