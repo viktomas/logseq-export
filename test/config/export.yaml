@@ -1,0 +1,6 @@
+---
+unquotedProperties:
+  - date
+  - tags
+assetsRelativePath: "static/images/logseq"
+webAssetsPathPrefix: "/images/logseq"

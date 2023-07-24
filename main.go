@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"flag"
 	"fmt"
 	"io/fs"
 	"log"
@@ -20,14 +19,6 @@ type page struct {
 	attributes map[string]string
 	assets     []string
 	text       string
-}
-
-type exportOptions struct {
-	graphPath           string
-	blogFolder          string
-	assetsRelativePath  string
-	webAssetsPathPrefix string
-	unquotedProperties  []string
 }
 
 /*
@@ -71,67 +62,49 @@ func findMatchingFiles(appFS afero.Fs, rootPath string, substring string, ignore
 	return result, nil
 }
 
-/*
-parseOptions produce a valid exportOptions object
-if a mandatory argument is missing, parseOptions will print error message, program usage and exits with os.Exit(1)
-*/
-func parseOptions() exportOptions {
-	graphPath := flag.String("graphPath", "", "[MANDATORY] Folder where all public pages are exported.") // TODO rename graphPath -> graphFolder or maybe logseqFolder
-	blogFolder := flag.String("blogFolder", "", "[MANDATORY] Folder where this program creates a new subfolder with public logseq pages.")
-	assetsRelativePath := flag.String("assetsRelativePath", "logseq-images", "relative path within blogFolder where the assets (images) should be stored (e.g. 'static/images/logseq'). Default is `logseq-images`")
-	webAssetsPathPrefix := flag.String("webAssetsPathPrefix", "/logseq-images", "path that the images are going to be served on on the web (e.g. '/public/images/logseq'). Default is `/logseq-images`")
-	rawUnquotedProperties := flag.String("unquotedProperties", "", "comma-separated list of logseq page properties that won't be quoted in the markdown front matter, e.g. 'date,public,slug")
-	flag.Parse()
-	if *graphPath == "" || *blogFolder == "" {
-		log.Println("mandatory argument is missing")
-		flag.Usage()
-		os.Exit(1)
-	}
-	unquotedProperties := parseUnquotedProperties(*rawUnquotedProperties)
-	return exportOptions{
-		graphPath:           *graphPath,
-		blogFolder:          *blogFolder,
-		assetsRelativePath:  *assetsRelativePath,
-		webAssetsPathPrefix: *webAssetsPathPrefix,
-		unquotedProperties:  unquotedProperties,
-	}
-}
-
 func main() {
+	c, err := parseConfig(os.Args)
+	if err != nil {
+		log.Fatalf("parsing of the configuration failed: %v", err)
+	}
+	fmt.Printf("config is %v", c)
 	appFS := afero.NewOsFs()
-	options := parseOptions()
-	publicFiles, err := findMatchingFiles(appFS, options.graphPath, "public::", regexp.MustCompile(`^(logseq|.git)/`))
+	config, err := parseConfig(os.Args)
+	if err != nil {
+		log.Fatalf("The configuration could not be parsed: %v", err)
+	}
+	publicFiles, err := findMatchingFiles(appFS, config.LogseqFolder, "public::", regexp.MustCompile(`^(logseq|.git)/`))
 	if err != nil {
 		log.Fatalf("Error during walking through a folder %v", err)
 	}
 	for _, publicFile := range publicFiles {
-		err = exportPublicPage(appFS, publicFile, options)
+		err = exportPublicPage(appFS, publicFile, config)
 		if err != nil {
 			log.Fatalf("Error when exporting page %q: %v", publicFile, err)
 		}
 	}
 }
 
-func exportPublicPage(appFS afero.Fs, publicFile string, options exportOptions) error {
+func exportPublicPage(appFS afero.Fs, publicFile string, config *Config) error {
 	srcContent, err := afero.ReadFile(appFS, publicFile)
 	if err != nil {
 		return fmt.Errorf("reading the %q file failed: %v", publicFile, err)
 	}
 	_, name := filepath.Split(publicFile)
 	page := parsePage(name, string(srcContent))
-	result := transformPage(page, options.webAssetsPathPrefix)
-	assetFolder := filepath.Join(options.blogFolder, options.assetsRelativePath)
+	result := transformPage(page, config.WebAssetsPathPrefix)
+	assetFolder := filepath.Join(config.OutputFolder, config.AssetsRelativePath)
 	err = copyAssets(appFS, publicFile, assetFolder, result.assets)
 	if err != nil {
 		return fmt.Errorf("copying assets for page %q failed: %v", publicFile, err)
 	}
-	dest := filepath.Join(options.blogFolder, result.filename)
+	dest := filepath.Join(config.OutputFolder, result.filename)
 	folder, _ := filepath.Split(dest)
 	err = appFS.MkdirAll(folder, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("creating parent directory for %q failed: %v", dest, err)
 	}
-	outputFileContent := render(result, options.unquotedProperties)
+	outputFileContent := render(result, config.UnquotedProperties)
 	err = afero.WriteFile(appFS, dest, []byte(outputFileContent), 0644)
 	if err != nil {
 		return fmt.Errorf("copying file %q failed: %v", dest, err)
