@@ -48,6 +48,10 @@ logseq-export \
 
 This will take my logseq notes and copies them to blog, it will also copy all the images to `/Users/tomas/workspace/private/blog/static/images/logseq`, but the image links themselves are going to have `/images/logseq` prefix (`![alt](/images/logseq/image.png)`).
 
+### Contstraints
+
+- `logseq-export` assumes that all the pages you want to export are in `pages/` folder inside your `logseqFolder`.
+
 ### Logseq page properties with a special meaning (all optional)
 
 - `public` - as soon as this page property is present (regardless of value), the page gets exported

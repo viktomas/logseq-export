@@ -8,7 +8,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"regexp"
 	"strings"
 
 	"github.com/spf13/afero"
@@ -24,22 +23,14 @@ type oldPage struct {
 
 /*
 findMatchingFiles finds all files in rootPath that contain substring
-ignoreRegexp is an expression that is evaluated on **relative** path of files within the graph (e.g. `.git/HEAD` or `logseq/.bkp/something.md`) if it matches, the file is not processed
 */
-func findMatchingFiles(appFS afero.Fs, rootPath string, substring string, ignoreRegexp *regexp.Regexp) ([]string, error) {
+func findMatchingFiles(appFS afero.Fs, rootPath string, substring string) ([]string, error) {
 	var result []string
 	err := afero.Walk(appFS, rootPath, func(path string, info fs.FileInfo, walkError error) error {
 		if walkError != nil {
 			return walkError
 		}
 		if info.IsDir() {
-			return nil
-		}
-		relativePath, err := filepath.Rel(rootPath, path)
-		if err != nil {
-			return err
-		}
-		if ignoreRegexp != nil && ignoreRegexp.MatchString(filepath.ToSlash(relativePath)) {
 			return nil
 		}
 		file, err := appFS.OpenFile(path, os.O_RDONLY, os.ModePerm)
@@ -74,54 +65,59 @@ func loadPublicPages(appFS afero.Fs, logseqFolder string) ([]rawPage, error) {
 		appFS,
 		logseqPagesFolder,
 		"public::",
-		regexp.MustCompile(`^(logseq|.git)/`),
 	)
+	// FIXME: test this error
 	if err != nil {
-		fmt.Errorf("error during walking through the logseq folder (%q): %w", logseqPagesFolder, err)
+		return nil, fmt.Errorf("error during walking through the logseq folder (%q): %w", logseqPagesFolder, err)
 	}
 	pages := make([]rawPage, 0, len(publicFiles))
 	for _, publicFile := range publicFiles {
-		pages = append(pages, rawPage{fullPath: publicFile})
+		srcContent, err := afero.ReadFile(appFS, publicFile)
+		if err != nil {
+			return nil, fmt.Errorf("reading the %q file failed: %w", publicFile, err)
+		}
+		pages = append(pages, rawPage{
+			fullPath: publicFile,
+			content:  string(srcContent),
+		})
 	}
 	return pages, nil
 
 }
-
 func main() {
-	c, err := parseConfig(os.Args)
+	err := Run(os.Args)
 	if err != nil {
-		log.Fatalf("parsing of the configuration failed: %v", err)
-	}
-	fmt.Printf("config is %v", c)
-	appFS := afero.NewOsFs()
-	config, err := parseConfig(os.Args)
-	if err != nil {
-		log.Fatalf("The configuration could not be parsed: %v", err)
-	}
-	publicFiles, err := loadPublicPages(appFS, config.LogseqFolder)
-	if err != nil {
-		log.Fatalf("Error during walking through a folder %v", err)
-	}
-	for _, page := range publicFiles {
-		err = exportPublicPage(appFS, page.fullPath, config)
-		if err != nil {
-			log.Fatalf("Error when exporting page %q: %v", page.fullPath, err)
-		}
+		log.Fatal(err.Error())
 	}
 }
 
-func exportPublicPage(appFS afero.Fs, publicFile string, config *Config) error {
-	srcContent, err := afero.ReadFile(appFS, publicFile)
+func Run(args []string) error {
+	appFS := afero.NewOsFs()
+	config, err := parseConfig(args)
 	if err != nil {
-		return fmt.Errorf("reading the %q file failed: %v", publicFile, err)
+		return fmt.Errorf("the configuration could not be parsed: %w", err)
 	}
-	_, name := filepath.Split(publicFile)
-	page := parsePage(name, string(srcContent))
+	publicFiles, err := loadPublicPages(appFS, config.LogseqFolder)
+	if err != nil {
+		return fmt.Errorf("Error during walking through a folder %v", err)
+	}
+	for _, page := range publicFiles {
+		err = exportPublicPage(appFS, page, config)
+		if err != nil {
+			return fmt.Errorf("error when exporting page %q: %v", page.fullPath, err)
+		}
+	}
+	return nil
+}
+
+func exportPublicPage(appFS afero.Fs, rawPage rawPage, config *Config) error {
+	_, name := filepath.Split(rawPage.fullPath)
+	page := parsePage(name, rawPage.content)
 	result := transformPage(page, config.WebAssetsPathPrefix)
 	assetFolder := filepath.Join(config.OutputFolder, config.AssetsRelativePath)
-	err = copyAssets(appFS, publicFile, assetFolder, result.assets)
+	err := copyAssets(appFS, rawPage.fullPath, assetFolder, result.assets)
 	if err != nil {
-		return fmt.Errorf("copying assets for page %q failed: %v", publicFile, err)
+		return fmt.Errorf("copying assets for page %q failed: %v", rawPage.fullPath, err)
 	}
 	dest := filepath.Join(config.OutputFolder, result.filename)
 	folder, _ := filepath.Split(dest)
