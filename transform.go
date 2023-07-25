@@ -25,14 +25,14 @@ func generateFileName(originalName string, attributes map[string]string) string 
 	return fmt.Sprintf("%s%s.md", date, attributes["slug"])
 }
 
-func addTitleIfMissing(p page) page {
+func addTitleIfMissing(p oldPage) oldPage {
 	if p.attributes["title"] == "" {
 		p.attributes["title"] = regexp.MustCompile(`\.[^.]*$`).ReplaceAllString(p.filename, "")
 	}
 	return p
 }
 
-func addFileName(p page) page {
+func addFileName(p oldPage) oldPage {
 	filename := generateFileName(p.filename, p.attributes)
 	folder := filepath.Join(path.Split(p.attributes["folder"])) // the page property always uses `/` but the final delimiter is OS-dependent
 	p.filename = filepath.Join(folder, filename)
@@ -83,14 +83,14 @@ func unindentMultilineStrings(from string) string {
 }
 
 // onlyText turns text transformer into a page transformer
-func onlyText(textTransformer func(string) string) func(page) page {
-	return func(p page) page {
+func onlyText(textTransformer func(string) string) func(oldPage) oldPage {
+	return func(p oldPage) oldPage {
 		p.text = textTransformer(p.text)
 		return p
 	}
 }
 
-func applyAll(from page, transformers ...func(page) page) page {
+func applyAll(from oldPage, transformers ...func(oldPage) oldPage) oldPage {
 	result := from
 	for _, t := range transformers {
 		result = t(result)
@@ -108,8 +108,8 @@ extractAssets finds all markdown images with **relative** URL e.g. `![alt](../as
 it extracts the relative URL into a `page.assets“ array
 it replaces the relative links with `imagePrefixPath“: `{imagePrefixPath}/image.png`
 */
-func extractAssets(imagePrefixPath string) func(page) page {
-	return func(p page) page {
+func extractAssets(imagePrefixPath string) func(oldPage) oldPage {
+	return func(p oldPage) oldPage {
 		assetRegexp := regexp.MustCompile(`!\[.*?]\((\.\.?/.+?)\)`)
 		links := assetRegexp.FindAllStringSubmatch(p.text, -1)
 		assets := make([]string, 0, len(links))
@@ -142,7 +142,7 @@ func extractAssets(imagePrefixPath string) func(page) page {
 	}
 }
 
-func transformPage(p page, webAssetsPathPrefix string) page {
+func transformPage(p oldPage, webAssetsPathPrefix string) oldPage {
 	if p.attributes == nil {
 		p.attributes = map[string]string{}
 	}

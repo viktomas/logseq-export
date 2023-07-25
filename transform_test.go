@@ -38,7 +38,7 @@ func GenerateFileName(t *testing.T) {
 }
 
 func transformText(from string) string {
-	testPage := page{
+	testPage := oldPage{
 		filename:   "",
 		attributes: map[string]string{},
 		text:       from,
@@ -50,7 +50,7 @@ func transformText(from string) string {
 // TODO make sure that all transform text ends with \n (for better diffs)
 func TestTransformPage(t *testing.T) {
 	t.Run("adds filename as title if it is missing", func(t *testing.T) {
-		testPage := page{
+		testPage := oldPage{
 			filename:   "name with space.md",
 			attributes: map[string]string{},
 			text:       "",
@@ -60,7 +60,7 @@ func TestTransformPage(t *testing.T) {
 	})
 
 	t.Run("uses title page property if present", func(t *testing.T) {
-		testPage := page{
+		testPage := oldPage{
 			filename: "name with space.md",
 			attributes: map[string]string{
 				"title": "title from page prop",
@@ -72,7 +72,7 @@ func TestTransformPage(t *testing.T) {
 	})
 
 	t.Run("generates filename", func(t *testing.T) {
-		testPage := page{
+		testPage := oldPage{
 			filename: "name with space.md",
 			attributes: map[string]string{
 				"slug": "this-is-a-slug",
@@ -85,7 +85,7 @@ func TestTransformPage(t *testing.T) {
 	})
 
 	t.Run("uses folder attribute in file name", func(t *testing.T) {
-		testPage := page{
+		testPage := oldPage{
 			filename: "name with space.md",
 			attributes: map[string]string{
 				"folder": "content/posts",
@@ -142,7 +142,7 @@ one`, result)
 
 func TestTransformImages(t *testing.T) {
 	t.Run("extracts relative images", func(t *testing.T) {
-		testPage := page{
+		testPage := oldPage{
 			filename: "a.md",
 			text:     "- ![hello world](../assets/image.png)",
 		}
@@ -152,7 +152,7 @@ func TestTransformImages(t *testing.T) {
 	})
 
 	t.Run("ignores absolute images", func(t *testing.T) {
-		testPage := page{
+		testPage := oldPage{
 			filename: "a.md",
 			text:     "- ![hello world](http://example.com/assets/image.png)",
 		}
@@ -162,7 +162,7 @@ func TestTransformImages(t *testing.T) {
 	})
 
 	t.Run("extracts relative images from image attribute", func(t *testing.T) {
-		testPage := page{
+		testPage := oldPage{
 			attributes: map[string]string{
 				"image": "../assets/image.png",
 			},
@@ -175,7 +175,7 @@ func TestTransformImages(t *testing.T) {
 	})
 
 	t.Run("ignores absolute images in image attribute", func(t *testing.T) {
-		testPage := page{
+		testPage := oldPage{
 			attributes: map[string]string{
 				"image": "http://example.com/assets/image.png",
 			},

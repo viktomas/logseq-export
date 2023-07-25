@@ -12,9 +12,9 @@ func parseTextAndAttributes(rawContent string) (string, map[string]string) {
 	return result[2], attributes
 }
 
-func parsePage(filename, rawContent string) page {
+func parsePage(filename, rawContent string) oldPage {
 	text, attributes := parseTextAndAttributes(rawContent)
-	return page{
+	return oldPage{
 		filename:   filename,
 		attributes: attributes,
 		text:       text,

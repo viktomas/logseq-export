@@ -30,7 +30,7 @@ func TestParseTextAndAttributes(t *testing.T) {
 
 func TestParsePage(t *testing.T) {
 	parsedPage := parsePage("Blog article%3A hello %26 world", rawContent)
-	assert.Equal(t, page{
+	assert.Equal(t, oldPage{
 		filename: "Blog article%3A hello %26 world",
 		attributes: map[string]string{
 			"public": "true",

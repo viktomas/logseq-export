@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -14,7 +15,7 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-type page struct {
+type oldPage struct {
 	filename   string
 	attributes map[string]string
 	assets     []string
@@ -62,6 +63,30 @@ func findMatchingFiles(appFS afero.Fs, rootPath string, substring string, ignore
 	return result, nil
 }
 
+type rawPage struct {
+	fullPath string
+	content  string
+}
+
+func loadPublicPages(appFS afero.Fs, logseqFolder string) ([]rawPage, error) {
+	logseqPagesFolder := path.Join(logseqFolder, "pages")
+	publicFiles, err := findMatchingFiles(
+		appFS,
+		logseqPagesFolder,
+		"public::",
+		regexp.MustCompile(`^(logseq|.git)/`),
+	)
+	if err != nil {
+		fmt.Errorf("error during walking through the logseq folder (%q): %w", logseqPagesFolder, err)
+	}
+	pages := make([]rawPage, 0, len(publicFiles))
+	for _, publicFile := range publicFiles {
+		pages = append(pages, rawPage{fullPath: publicFile})
+	}
+	return pages, nil
+
+}
+
 func main() {
 	c, err := parseConfig(os.Args)
 	if err != nil {
@@ -73,14 +98,14 @@ func main() {
 	if err != nil {
 		log.Fatalf("The configuration could not be parsed: %v", err)
 	}
-	publicFiles, err := findMatchingFiles(appFS, config.LogseqFolder, "public::", regexp.MustCompile(`^(logseq|.git)/`))
+	publicFiles, err := loadPublicPages(appFS, config.LogseqFolder)
 	if err != nil {
 		log.Fatalf("Error during walking through a folder %v", err)
 	}
-	for _, publicFile := range publicFiles {
-		err = exportPublicPage(appFS, publicFile, config)
+	for _, page := range publicFiles {
+		err = exportPublicPage(appFS, page.fullPath, config)
 		if err != nil {
-			log.Fatalf("Error when exporting page %q: %v", publicFile, err)
+			log.Fatalf("Error when exporting page %q: %v", page.fullPath, err)
 		}
 	}
 }
@@ -137,7 +162,7 @@ func parseUnquotedProperties(param string) []string {
 	return strings.Split(param, ",")
 }
 
-func render(p page, dontQuote []string) string {
+func render(p oldPage, dontQuote []string) string {
 	sortedKeys := make([]string, 0, len(p.attributes))
 	for k := range p.attributes {
 		sortedKeys = append(sortedKeys, k)
