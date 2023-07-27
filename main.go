@@ -59,6 +59,13 @@ type rawPage struct {
 	content  string
 }
 
+type page struct {
+	originalPath string
+	exportPath   string
+	content      string
+	attributes   map[string]string
+}
+
 func loadPublicPages(appFS afero.Fs, logseqFolder string) ([]rawPage, error) {
 	logseqPagesFolder := path.Join(logseqFolder, "pages")
 	publicFiles, err := findMatchingFiles(
@@ -97,17 +104,38 @@ func Run(args []string) error {
 	if err != nil {
 		return fmt.Errorf("the configuration could not be parsed: %w", err)
 	}
-	publicFiles, err := loadPublicPages(appFS, config.LogseqFolder)
+	publicPages, err := loadPublicPages(appFS, config.LogseqFolder)
 	if err != nil {
 		return fmt.Errorf("Error during walking through a folder %v", err)
 	}
-	for _, page := range publicFiles {
-		err = exportPublicPage(appFS, page, config)
+
+	exportPages := make([]page, 0, len(publicPages))
+	for _, publicPage := range publicPages {
+		exportPath := getExportPath(publicPage, config)
+		exportPages = append(exportPages, page{
+			originalPath: publicPage.fullPath,
+			exportPath:   exportPath,
+			content:      publicPage.content,
+		})
+	}
+
+	for _, page := range exportPages {
+		folder, _ := filepath.Split(page.exportPath)
+		err = appFS.MkdirAll(folder, os.ModePerm)
 		if err != nil {
-			return fmt.Errorf("error when exporting page %q: %v", page.fullPath, err)
+			return fmt.Errorf("creating parent directory for %q failed: %v", page.exportPath, err)
+		}
+		err = afero.WriteFile(appFS, page.exportPath, []byte(page.content), 0644)
+		if err != nil {
+			return fmt.Errorf("copying file %q failed: %v", page.exportPath, err)
 		}
 	}
 	return nil
+}
+
+func getExportPath(rawPage rawPage, config *Config) string {
+	fileName := path.Base(rawPage.fullPath)
+	return path.Join(config.OutputFolder, "logseq-pages", fileName)
 }
 
 func exportPublicPage(appFS afero.Fs, rawPage rawPage, config *Config) error {

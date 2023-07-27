@@ -13,16 +13,19 @@ func sanitizeName(orig string) string {
 }
 
 func generateFileName(originalName string, attributes map[string]string) string {
-	if _, ok := attributes["slug"]; !ok {
+	slug, slugPresent := attributes["slug"]
+	if !slugPresent {
 		return sanitizeName(originalName)
 	}
 
-	var date string
-	if _, ok := attributes["date"]; ok {
-		date = fmt.Sprintf("%s-", attributes["date"])
+	if date, ok := attributes["date"]; ok {
+		return fmt.Sprintf("%s.md", strings.Join(
+			[]string{date, slug},
+			"-",
+		))
 	}
 
-	return fmt.Sprintf("%s%s.md", date, attributes["slug"])
+	return fmt.Sprintf("%s.md", slug)
 }
 
 func addTitleIfMissing(p oldPage) oldPage {

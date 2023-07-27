@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"path"
 	"path/filepath"
@@ -31,8 +32,9 @@ func TestLoadPublicPages(t *testing.T) {
 }
 
 func TestFullTransformation(t *testing.T) {
+	deleteTestOutputFolder(t)
 	testLogseqFolder := path.Join(path.Dir(t.Name()), "test/logseq-folder")
-	testOutputFolder := path.Join(path.Dir(t.Name()), "test/test-output")
+	testOutputFolder := getTestOutputFolder(t)
 	args := []string{
 		"logseq-export",
 		"--logseqFolder",
@@ -114,13 +116,19 @@ func listFilesInFolder(t *testing.T, folderPath string) []string {
 	t.Helper()
 	var files []string
 
-	err := filepath.Walk(folderPath, func(path string, info os.FileInfo, err error) error {
+	err := filepath.Walk(folderPath, func(p string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
-		if !info.IsDir() {
-			files = append(files, path)
+		if info.IsDir() {
+			return nil
+
 		}
+		relativePath, err := filepath.Rel(folderPath, p)
+		if err != nil {
+			return fmt.Errorf("Can't produce relative path: %w", err)
+		}
+		files = append(files, relativePath)
 		return nil
 	})
 
@@ -130,4 +138,27 @@ func listFilesInFolder(t *testing.T, folderPath string) []string {
 
 	sort.Strings(files)
 	return files
+}
+
+func getTestOutputFolder(t testing.TB) string {
+	t.Helper()
+	return path.Join(path.Dir(t.Name()), "test/test-output")
+}
+
+func deleteTestOutputFolder(t *testing.T) {
+	t.Helper()
+	// Specify the path of the folder you want to delete
+	testOutputFolder := getTestOutputFolder(t)
+
+	// Check if the folder exists
+	if _, err := os.Stat(testOutputFolder); os.IsNotExist(err) {
+		// The folder doesn't exist, nothing to delete
+		return
+	}
+
+	// The folder exists, so delete it
+	err := os.RemoveAll(testOutputFolder)
+	if err != nil {
+		t.Fatalf("Error deleting folder '%s': %s\n", testOutputFolder, err)
+	}
 }
