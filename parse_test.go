@@ -34,7 +34,7 @@ func TestStripAttributes(t *testing.T) {
 }
 
 func TestParsePage(t *testing.T) {
-	parsedPage := parsePage("Blog article%3A hello %26 world", rawContent)
+	parsedPage := parsePageOld("Blog article%3A hello %26 world", rawContent)
 	assert.Equal(t, oldPage{
 		filename: "Blog article%3A hello %26 world",
 		attributes: map[string]string{
@@ -86,4 +86,48 @@ func TestParseAssets(t *testing.T) {
 	// 	require.Equal(t, "http://example.com/assets/image.png", result.attributes["image"])
 	// })
 
+}
+
+func TestParseText(t *testing.T) {
+	t.Run("removes dashes with no text after them", func(t *testing.T) {
+		result := parseContent("-\n\t- \n\t\t-")
+		require.Equal(t, "\n\n", result.content)
+	})
+
+	t.Run("removes dashes from the text", func(t *testing.T) {
+		result := parseContent("-\n- hello")
+		require.Equal(t, "\n\nhello", result.content)
+	})
+
+	t.Run("turns second level bullet points into first level", func(t *testing.T) {
+		result := parseContent("\t- hello\n\t- world")
+		require.Equal(t, "\n- hello\n\n- world", result.content) // TODO: maybe remove the duplicated new line
+	})
+
+	t.Run("removes one tab from multi-level bullet points", func(t *testing.T) {
+		result := parseContent("\t\t- hello\n\t\t\t- world")
+		require.Equal(t, "\t- hello\n\t\t- world", result.content)
+	})
+	t.Run("removes tabs from all subsequent lines of a bullet point", func(t *testing.T) {
+		result := parseContent(`
+- ~~~ts
+  const hello = "world";
+  ~~~
+- single line
+- multiple
+  lines
+  in
+  one`)
+		require.Equal(t, `
+~~~ts
+const hello = "world";
+~~~
+
+single line
+
+multiple
+lines
+in
+one`, result.content)
+	})
 }

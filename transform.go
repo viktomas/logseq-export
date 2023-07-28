@@ -42,49 +42,6 @@ func addFileName(p oldPage) oldPage {
 	return p
 }
 
-func removeEmptyBulletPoints(from string) string {
-	return regexp.MustCompile(`(?m:^\s*-\s*$)`).ReplaceAllString(from, "")
-}
-
-func firstBulletPointsToParagraphs(from string) string {
-	return regexp.MustCompile(`(?m:^- )`).ReplaceAllString(from, "\n")
-}
-
-func secondToFirstBulletPoints(from string) string {
-	return regexp.MustCompile(`(?m:^\t-)`).ReplaceAllString(from, "\n-")
-}
-
-func removeTabFromMultiLevelBulletPoints(from string) string {
-	return regexp.MustCompile(`(?m:^\t{2,}-)`).ReplaceAllStringFunc(from, func(s string) string {
-		return s[1:]
-	})
-}
-
-const multilineBlocks = `\n?(- .*\n(?:  .*\n?)+)`
-
-/*
-Makes sure that code blocks and multiline blocks are without any extra characters at the start of the line
-
-  - ```ts
-    const hello = "world"
-    ```
-
-is changed to
-
-```ts
-const hello = "world"
-```
-*/
-func unindentMultilineStrings(from string) string {
-	return regexp.MustCompile(multilineBlocks).ReplaceAllStringFunc(from, func(s string) string {
-		match := regexp.MustCompile(multilineBlocks).FindStringSubmatch(s)
-		onlyBlock := match[1]
-		replacement := regexp.MustCompile(`((?m:^[- ] ))`).ReplaceAllString(onlyBlock, "") // remove the leading spaces or dash
-		replacedString := strings.Replace(s, onlyBlock, replacement, 1)
-		return fmt.Sprintf("\n%s", replacedString) // add extra new line
-	})
-}
-
 // onlyText turns text transformer into a page transformer
 func onlyText(textTransformer func(string) string) func(oldPage) oldPage {
 	return func(p oldPage) oldPage {
@@ -153,11 +110,6 @@ func transformPage(p oldPage, webAssetsPathPrefix string) oldPage {
 		p,
 		addTitleIfMissing,
 		addFileName,
-		onlyText(removeEmptyBulletPoints),
-		onlyText(unindentMultilineStrings),
-		onlyText(firstBulletPointsToParagraphs),
-		onlyText(secondToFirstBulletPoints),
-		onlyText(removeTabFromMultiLevelBulletPoints),
 		extractAssets(webAssetsPathPrefix),
 	)
 }

@@ -158,14 +158,6 @@ func Run(args []string) error {
 	return nil
 }
 
-func parseContent(rawContent string) parsedContent {
-	return parsedContent{
-		attributes: parseAttributes(rawContent),
-		content:    stripAttributes(rawContent),
-		assets:     parseAssets(rawContent),
-	}
-}
-
 func getExportPath(rawPage rawPage, config *Config) string {
 	fileName := path.Base(rawPage.fullPath)
 	return path.Join(config.OutputFolder, "logseq-pages", fileName)
@@ -173,7 +165,7 @@ func getExportPath(rawPage rawPage, config *Config) string {
 
 func exportPublicPage(appFS afero.Fs, rawPage rawPage, config *Config) error {
 	_, name := filepath.Split(rawPage.fullPath)
-	page := parsePage(name, rawPage.content)
+	page := parsePageOld(name, rawPage.content)
 	result := transformPage(page, config.WebAssetsPathPrefix)
 	assetFolder := filepath.Join(config.OutputFolder, config.AssetsRelativePath)
 	err := copyAssetsOld(appFS, rawPage.fullPath, assetFolder, result.assets)
