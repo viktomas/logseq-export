@@ -150,12 +150,23 @@ func Run(args []string) error {
 		if err != nil {
 			return fmt.Errorf("creating parent directory for %q failed: %v", page.exportPath, err)
 		}
-		err = afero.WriteFile(appFS, page.exportPath, []byte(page.pc.content), 0644)
+		// TODO: more processing on the content (linking pages, attributes)
+		finalContent := replaceAssetPaths(page)
+		err = afero.WriteFile(appFS, page.exportPath, []byte(finalContent), 0644)
 		if err != nil {
 			return fmt.Errorf("copying file %q failed: %v", page.exportPath, err)
 		}
 	}
 	return nil
+}
+
+func replaceAssetPaths(p exportPage) string {
+	newContent := p.pc.content
+	for _, link := range p.pc.assets {
+		fileName := filepath.Base(link)
+		newContent = strings.ReplaceAll(newContent, link, path.Join("/logseq-assets", fileName))
+	}
+	return newContent
 }
 
 func getExportPath(rawPage rawPage, config *Config) string {

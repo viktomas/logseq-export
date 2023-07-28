@@ -31,6 +31,37 @@ func TestLoadPublicPages(t *testing.T) {
 	})
 }
 
+func expectIdenticalContent(t testing.TB, expectedPath, actualPath string) {
+	t.Helper()
+
+	if filepath.Ext(expectedPath) != ".md" {
+		t.Logf("Not comparing content of %s because it's not an md file", expectedPath)
+		return
+	}
+
+	expectedContentBytes, err := os.ReadFile(expectedPath)
+	if err != nil {
+		t.Fatal("Error reading the expected file:", err)
+	}
+	actualContentBytes, err := os.ReadFile(actualPath)
+	if err != nil {
+		t.Fatal("Error reading the actual file:", err)
+	}
+	require.Equal(t, string(expectedContentBytes), string(actualContentBytes), fmt.Sprintf("the content of %s and %s are not identical", expectedPath, actualPath))
+}
+
+func makeRelative(t testing.TB, parent string, paths []string) []string {
+	result := make([]string, 0, len(paths))
+	for _, absolutePath := range paths {
+		relativePath, err := filepath.Rel(parent, absolutePath)
+		if err != nil {
+			t.Fatal("Can't produce relative path: ", err)
+		}
+		result = append(result, relativePath)
+	}
+	return result
+}
+
 func TestFullTransformation(t *testing.T) {
 	deleteTestOutputFolder(t)
 	testLogseqFolder := path.Join(path.Dir(t.Name()), "test", "logseq-folder")
@@ -47,12 +78,23 @@ func TestFullTransformation(t *testing.T) {
 
 	expectedOutputFolder := path.Join(path.Dir(t.Name()), "test", "expected-output")
 
-	require.Equal(
-		t,
-		listFilesInFolder(t, expectedOutputFolder),
-		listFilesInFolder(t, testOutputFolder),
-		"The list of files in output folder is different from what the test expected",
-	)
+	expectedFiles := listFilesInFolder(t, expectedOutputFolder)
+	actualFiles := listFilesInFolder(t, testOutputFolder)
+
+	t.Run("the files are moved correctly", func(t *testing.T) {
+		require.Equal(
+			t,
+			makeRelative(t, expectedOutputFolder, expectedFiles),
+			makeRelative(t, testOutputFolder, actualFiles),
+			"The list of files in output folder is different from what the test expected",
+		)
+	})
+
+	t.Run("the files get transformed correctly", func(t *testing.T) {
+		for i := 0; i < len(expectedFiles); i++ {
+			expectIdenticalContent(t, expectedFiles[i], actualFiles[i])
+		}
+	})
 }
 
 func TestRender(t *testing.T) {
@@ -124,11 +166,7 @@ func listFilesInFolder(t *testing.T, folderPath string) []string {
 			return nil
 
 		}
-		relativePath, err := filepath.Rel(folderPath, p)
-		if err != nil {
-			return fmt.Errorf("Can't produce relative path: %w", err)
-		}
-		files = append(files, relativePath)
+		files = append(files, p)
 		return nil
 	})
 
