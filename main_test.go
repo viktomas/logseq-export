@@ -33,7 +33,7 @@ func TestLoadPublicPages(t *testing.T) {
 
 func TestFullTransformation(t *testing.T) {
 	deleteTestOutputFolder(t)
-	testLogseqFolder := path.Join(path.Dir(t.Name()), "test/logseq-folder")
+	testLogseqFolder := path.Join(path.Dir(t.Name()), "test", "logseq-folder")
 	testOutputFolder := getTestOutputFolder(t)
 	args := []string{
 		"logseq-export",
@@ -45,7 +45,7 @@ func TestFullTransformation(t *testing.T) {
 	err := Run(args)
 	require.NoError(t, err)
 
-	expectedOutputFolder := path.Join(path.Dir(t.Name()), "test/expected-output")
+	expectedOutputFolder := path.Join(path.Dir(t.Name()), "test", "expected-output")
 
 	require.Equal(
 		t,
@@ -142,7 +142,7 @@ func listFilesInFolder(t *testing.T, folderPath string) []string {
 
 func getTestOutputFolder(t testing.TB) string {
 	t.Helper()
-	return path.Join(path.Dir(t.Name()), "test/test-output")
+	return path.Join(path.Dir(t.Name()), "test", "test-output")
 }
 
 func deleteTestOutputFolder(t *testing.T) {
