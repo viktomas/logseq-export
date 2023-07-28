@@ -33,9 +33,8 @@ type parsedContent struct {
 	assets     []string
 }
 
-type exportPage struct {
+type parsedPage struct {
 	originalPath string
-	exportPath   string
 	pc           parsedContent
 }
 
@@ -104,17 +103,38 @@ func Run(args []string) error {
 		return fmt.Errorf("Error during walking through a folder %v", err)
 	}
 
-	exportPages := make([]exportPage, 0, len(publicPages))
+	exportPages := make([]parsedPage, 0, len(publicPages))
 	for _, publicPage := range publicPages {
 		pc := parseContent(publicPage.content)
-		exportPath := getExportPath(publicPage, config)
-		exportPages = append(exportPages, exportPage{
+		exportPages = append(exportPages, parsedPage{
 			originalPath: publicPage.fullPath,
-			exportPath:   exportPath,
 			pc:           pc,
 		})
 	}
 
+	err = exportAssets(appFS, config.OutputFolder, exportPages)
+	if err != nil {
+		return fmt.Errorf("failed to export assets: %w", err)
+	}
+
+	for _, page := range exportPages {
+		exportPath := getExportPath(page.originalPath, config)
+		folder, _ := filepath.Split(exportPath)
+		err = appFS.MkdirAll(folder, os.ModePerm)
+		if err != nil {
+			return fmt.Errorf("creating parent directory for %q failed: %v", exportPath, err)
+		}
+		// TODO: more processing on the content (linking pages, attributes)
+		finalContent := replaceAssetPaths(page)
+		err = afero.WriteFile(appFS, exportPath, []byte(finalContent), 0644)
+		if err != nil {
+			return fmt.Errorf("copying file %q failed: %v", exportPath, err)
+		}
+	}
+	return nil
+}
+
+func exportAssets(appFS afero.Fs, outputFolder string, exportPages []parsedPage) error {
 	// get all asset paths (deduplicated)
 	assetFullPaths := map[string]struct{}{}
 	for _, page := range exportPages {
@@ -124,7 +144,7 @@ func Run(args []string) error {
 		}
 	}
 
-	assetOutputFolder := filepath.Join(config.OutputFolder, "logseq-assets")
+	assetOutputFolder := filepath.Join(outputFolder, "logseq-assets")
 
 	assetSrcAndDest := map[string]string{}
 	for fullPath := range assetFullPaths {
@@ -132,7 +152,7 @@ func Run(args []string) error {
 		assetSrcAndDest[fullPath] = dest
 	}
 
-	err = appFS.MkdirAll(assetOutputFolder, os.ModePerm)
+	err := appFS.MkdirAll(assetOutputFolder, os.ModePerm)
 	if err != nil {
 		log.Fatalf("Error when making assets folder %q: %v", assetOutputFolder, err)
 	}
@@ -143,24 +163,10 @@ func Run(args []string) error {
 			return fmt.Errorf("failed copying asset from %q to %q: %w", src, dest, err)
 		}
 	}
-
-	for _, page := range exportPages {
-		folder, _ := filepath.Split(page.exportPath)
-		err = appFS.MkdirAll(folder, os.ModePerm)
-		if err != nil {
-			return fmt.Errorf("creating parent directory for %q failed: %v", page.exportPath, err)
-		}
-		// TODO: more processing on the content (linking pages, attributes)
-		finalContent := replaceAssetPaths(page)
-		err = afero.WriteFile(appFS, page.exportPath, []byte(finalContent), 0644)
-		if err != nil {
-			return fmt.Errorf("copying file %q failed: %v", page.exportPath, err)
-		}
-	}
 	return nil
 }
 
-func replaceAssetPaths(p exportPage) string {
+func replaceAssetPaths(p parsedPage) string {
 	newContent := p.pc.content
 	for _, link := range p.pc.assets {
 		fileName := filepath.Base(link)
@@ -169,8 +175,8 @@ func replaceAssetPaths(p exportPage) string {
 	return newContent
 }
 
-func getExportPath(rawPage rawPage, config *Config) string {
-	fileName := path.Base(rawPage.fullPath)
+func getExportPath(originalPath string, config *Config) string {
+	fileName := path.Base(originalPath)
 	return path.Join(config.OutputFolder, "logseq-pages", fileName)
 }
 
@@ -178,14 +184,9 @@ func exportPublicPage(appFS afero.Fs, rawPage rawPage, config *Config) error {
 	_, name := filepath.Split(rawPage.fullPath)
 	page := parsePageOld(name, rawPage.content)
 	result := transformPage(page, config.WebAssetsPathPrefix)
-	assetFolder := filepath.Join(config.OutputFolder, config.AssetsRelativePath)
-	err := copyAssetsOld(appFS, rawPage.fullPath, assetFolder, result.assets)
-	if err != nil {
-		return fmt.Errorf("copying assets for page %q failed: %v", rawPage.fullPath, err)
-	}
 	dest := filepath.Join(config.OutputFolder, result.filename)
 	folder, _ := filepath.Split(dest)
-	err = appFS.MkdirAll(folder, os.ModePerm)
+	err := appFS.MkdirAll(folder, os.ModePerm)
 	if err != nil {
 		return fmt.Errorf("creating parent directory for %q failed: %v", dest, err)
 	}
@@ -193,24 +194,6 @@ func exportPublicPage(appFS afero.Fs, rawPage rawPage, config *Config) error {
 	err = afero.WriteFile(appFS, dest, []byte(outputFileContent), 0644)
 	if err != nil {
 		return fmt.Errorf("copying file %q failed: %v", dest, err)
-	}
-	return nil
-}
-
-func copyAssetsOld(appFS afero.Fs, baseFile string, assetFolder string, assets []string) error {
-	err := appFS.MkdirAll(assetFolder, os.ModePerm)
-	if err != nil {
-		log.Fatalf("Error when making assets folder %q: %v", assetFolder, err)
-	}
-	baseDir, _ := filepath.Split(baseFile)
-	for _, relativeAssetPath := range assets {
-		assetPath := filepath.Clean(filepath.Join(baseDir, relativeAssetPath))
-		_, assetName := filepath.Split(assetPath)
-		destPath := filepath.Join(assetFolder, assetName)
-		err := copy(appFS, assetPath, destPath)
-		if err != nil {
-			return err
-		}
 	}
 	return nil
 }
