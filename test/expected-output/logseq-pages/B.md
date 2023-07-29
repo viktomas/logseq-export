@@ -7,6 +7,6 @@ title: "Hello World"
 
 This is a test file B
 
-With one extra line
+[A](/logseq-pages/A.md)
 
-Totalling 3 blocks
+[complex-name](/logseq-pages/2023-07-29-not-so-complex.md)

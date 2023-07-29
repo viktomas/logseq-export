@@ -8,6 +8,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"regexp"
 	"strings"
 
 	"github.com/spf13/afero"
@@ -101,18 +102,23 @@ func Run(args []string) error {
 	}
 
 	// parse pages
-	exportPages := make([]parsedPage, 0, len(publicPages))
+	parsedPages := make([]parsedPage, 0, len(publicPages))
 	for _, publicPage := range publicPages {
-		exportPages = append(exportPages, parsePage(publicPage))
+		parsedPages = append(parsedPages, parsePage(publicPage))
 	}
 
-	err = exportAssets(appFS, config.OutputFolder, exportPages)
+	err = exportAssets(appFS, config.OutputFolder, parsedPages)
 	if err != nil {
 		return fmt.Errorf("failed to export assets: %w", err)
 	}
 
-	for _, page := range exportPages {
-		exportPath := getExportPath(page.exportFilename, config)
+	titleToFilename := map[string]string{}
+	for _, p := range parsedPages {
+		titleToFilename[p.title] = p.exportFilename
+	}
+
+	for _, page := range parsedPages {
+		exportPath := path.Join(config.OutputFolder, "logseq-pages", page.exportFilename)
 		folder, _ := filepath.Split(exportPath)
 		err = appFS.MkdirAll(folder, os.ModePerm)
 		if err != nil {
@@ -120,14 +126,35 @@ func Run(args []string) error {
 		}
 		page.pc.attributes["title"] = page.title
 		// TODO: more processing on the content (linking pages, attributes)
-		finalContent := replaceAssetPaths(page)
+		contentWithAssets := replaceAssetPaths(page)
+		links := detectPageLinks(contentWithAssets)
+		for _, l := range links {
+			linkedFilename, ok := titleToFilename[l]
+			if !ok {
+				continue
+			}
+			contentWithAssets = strings.ReplaceAll(
+				contentWithAssets,
+				fmt.Sprintf("[[%s]]", l),
+				fmt.Sprintf("[%s](%s)", l, filepath.Join("/logseq-pages", linkedFilename)),
+			)
+		}
 		// TODO find out what properties should I not quote
-		err = afero.WriteFile(appFS, exportPath, []byte(render(page.pc.attributes, finalContent, []string{"public"})), 0644)
+		err = afero.WriteFile(appFS, exportPath, []byte(render(page.pc.attributes, contentWithAssets, []string{"public"})), 0644)
 		if err != nil {
 			return fmt.Errorf("copying file %q failed: %v", exportPath, err)
 		}
 	}
 	return nil
+}
+
+func detectPageLinks(content string) []string {
+	result := regexp.MustCompile(`\[\[([^\/\n\r]+?)]]`).FindAllStringSubmatch(content, -1)
+	links := make([]string, 0, len(result))
+	for _, r := range result {
+		links = append(links, r[1])
+	}
+	return links
 }
 
 func exportAssets(appFS afero.Fs, outputFolder string, exportPages []parsedPage) error {
@@ -169,10 +196,6 @@ func replaceAssetPaths(p parsedPage) string {
 		newContent = strings.ReplaceAll(newContent, link, path.Join("/logseq-assets", fileName))
 	}
 	return newContent
-}
-
-func getExportPath(filename string, config *Config) string {
-	return path.Join(config.OutputFolder, "logseq-pages", filename)
 }
 
 func parseUnquotedProperties(param string) []string {

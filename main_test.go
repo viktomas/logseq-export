@@ -204,3 +204,16 @@ func deleteTestOutputFolder(t *testing.T) {
 		t.Fatalf("Error deleting folder '%s': %s\n", testOutputFolder, err)
 	}
 }
+
+func TestDetectPageLinks(t *testing.T) {
+	content := `- created: 2021-02-28T11:04:46
+
+TotT is a funny example of [[Environment design]] where Google decided to promote testing in 2006 by pasting one-page documents with tips and tricks on [[Automated testing]][^1]. It started as a joke during brainstorming session, but it turned out to be successful. Since 2006, there have been hundreds of episodes of one-page TotT.
+
+[^1]: [[Winters, Manshreck, Wright - Software Engineering at Google]] p227
+	`
+
+	result := detectPageLinks(content)
+
+	require.Equal(t, []string{"Environment design", "Automated testing", "Winters, Manshreck, Wright - Software Engineering at Google"}, result)
+}
