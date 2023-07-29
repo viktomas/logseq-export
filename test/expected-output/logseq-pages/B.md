@@ -1,3 +1,7 @@
+---
+public: true
+title: "Hello World"
+---
 
 ![pngimg](/logseq-assets/picture-2.png)
 

@@ -28,13 +28,6 @@ func generateFileName(originalName string, attributes map[string]string) string 
 	return fmt.Sprintf("%s.md", slug)
 }
 
-func addTitleIfMissing(p oldPage) oldPage {
-	if p.attributes["title"] == "" {
-		p.attributes["title"] = regexp.MustCompile(`\.[^.]*$`).ReplaceAllString(p.filename, "")
-	}
-	return p
-}
-
 func addFileName(p oldPage) oldPage {
 	filename := generateFileName(p.filename, p.attributes)
 	folder := filepath.Join(path.Split(p.attributes["folder"])) // the page property always uses `/` but the final delimiter is OS-dependent
@@ -108,7 +101,6 @@ func transformPage(p oldPage, webAssetsPathPrefix string) oldPage {
 	}
 	return applyAll(
 		p,
-		addTitleIfMissing,
 		addFileName,
 		extractAssets(webAssetsPathPrefix),
 	)

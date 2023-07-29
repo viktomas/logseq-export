@@ -33,7 +33,7 @@ func TestStripAttributes(t *testing.T) {
 	require.Equal(t, textPart, textWithoutAttributes)
 }
 
-func TestParsePage(t *testing.T) {
+func TestParsePageOld(t *testing.T) {
 	parsedPage := parsePageOld("Blog article%3A hello %26 world", rawContent)
 	assert.Equal(t, oldPage{
 		filename: "Blog article%3A hello %26 world",
@@ -59,36 +59,42 @@ func TestParseAssets(t *testing.T) {
 	})
 
 	// TODO if first content line contains only image, move it to an image attribute (based on some config)
-	// t.Run("extracts relative images from image attribute", func(t *testing.T) {
-	// 	testPage := oldPage{
-	// 		attributes: map[string]string{
-	// 			"image": "../assets/image.png",
-	// 		},
-	// 		filename: "a.md",
-	// 		text:     "",
-	// 	}
-	// 	result := transformPage(testPage, "/images")
-	// 	require.Equal(t, []string{"../assets/image.png"}, result.assets)
-	// 	require.Equal(t, "/images/image.png", result.attributes["image"])
-	// })
+}
 
-	// TODO
-	// t.Run("ignores absolute images in image attribute", func(t *testing.T) {
-	// 	testPage := oldPage{
-	// 		attributes: map[string]string{
-	// 			"image": "http://example.com/assets/image.png",
-	// 		},
-	// 		filename: "a.md",
-	// 		text:     "",
-	// 	}
-	// 	result := transformPage(testPage, "/images")
-	// 	require.Equal(t, 0, len(result.assets))
-	// 	require.Equal(t, "http://example.com/assets/image.png", result.attributes["image"])
-	// })
+func TestParsePage(t *testing.T) {
+	t.Run("adds filename as title if it is missing", func(t *testing.T) {
+		testPage := textFile{
+			absoluteFSPath: "/name with space.md",
+			content:        "",
+		}
+		result := parsePage(testPage)
+		require.Equal(t, "name with space", result.title)
+	})
+
+	t.Run("uses title page property if present", func(t *testing.T) {
+		testPage := textFile{
+			absoluteFSPath: "/name with space.md",
+			content:        "title:: title from page prop\n",
+		}
+		result := parsePage(testPage)
+		require.Equal(t, "title from page prop", result.title)
+	})
 
 }
 
-func TestParseText(t *testing.T) {
+func TestParseContent(t *testing.T) {
+	t.Run("parses page with only one attribute", func(t *testing.T) {
+		result := parseContent("public:: true\n")
+		require.Equal(t, "", result.content)
+		require.Equal(t, "true", result.attributes["public"])
+	})
+
+	t.Run("parses page with one line", func(t *testing.T) {
+		result := parseContent("- a\n")
+		require.Equal(t, "\na\n", result.content)
+		require.Empty(t, result.attributes)
+	})
+
 	t.Run("removes dashes with no text after them", func(t *testing.T) {
 		result := parseContent("-\n\t- \n\t\t-")
 		require.Equal(t, "\n\n", result.content)

@@ -26,7 +26,7 @@ func TestLoadPublicPages(t *testing.T) {
 
 		require.Nil(t, err)
 		require.Len(t, matchingFiles, 1)
-		require.Equal(t, filepath.Join("/src", "pages", "b"), matchingFiles[0].fullPath)
+		require.Equal(t, filepath.Join("/src", "pages", "b"), matchingFiles[0].absoluteFSPath)
 		require.Equal(t, "public:: true\n- a bullet point", matchingFiles[0].content)
 	})
 }
@@ -99,15 +99,12 @@ func TestFullTransformation(t *testing.T) {
 
 func TestRender(t *testing.T) {
 	t.Run("it renders attributes as quoted strings", func(t *testing.T) {
-		testPage := oldPage{
-			filename: "",
-			attributes: map[string]string{
-				"first":  "1",
-				"second": "2",
-			},
-			text: "page text",
+		attributes := map[string]string{
+			"first":  "1",
+			"second": "2",
 		}
-		result := render(testPage, []string{})
+		content := "page text"
+		result := render(attributes, content, []string{})
 		require.Equal(t, `---
 first: "1"
 second: "2"
@@ -115,18 +112,15 @@ second: "2"
 page text`, result)
 	})
 	t.Run("it renders attributes in alphabetical order", func(t *testing.T) {
-		testPage := oldPage{
-			filename: "",
-			attributes: map[string]string{
-				"e": "1",
-				"d": "1",
-				"c": "1",
-				"b": "1",
-				"a": "1",
-			},
-			text: "page text",
+		attributes := map[string]string{
+			"e": "1",
+			"d": "1",
+			"c": "1",
+			"b": "1",
+			"a": "1",
 		}
-		result := render(testPage, []string{})
+		content := "page text"
+		result := render(attributes, content, []string{})
 		require.Equal(t, `---
 a: "1"
 b: "1"
@@ -137,15 +131,12 @@ e: "1"
 page text`, result)
 	})
 	t.Run("it renders attributes without quotes", func(t *testing.T) {
-		testPage := oldPage{
-			filename: "",
-			attributes: map[string]string{
-				"first":  "1",
-				"second": "2",
-			},
-			text: "page text",
+		attributes := map[string]string{
+			"first":  "1",
+			"second": "2",
 		}
-		result := render(testPage, []string{"first", "second"})
+		content := "page text"
+		result := render(attributes, content, []string{"first", "second"})
 		require.Equal(t, `---
 first: 1
 second: 2

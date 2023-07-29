@@ -21,9 +21,10 @@ type oldPage struct {
 	text       string
 }
 
-type rawPage struct {
-	fullPath string
-	content  string
+/* textFile captures all data about a text file stored on disk that we need for exporting logseq graph */
+type textFile struct {
+	absoluteFSPath string
+	content        string
 }
 
 type parsedContent struct {
@@ -34,13 +35,14 @@ type parsedContent struct {
 }
 
 type parsedPage struct {
+	title        string
 	originalPath string
 	pc           parsedContent
 }
 
 const publicAttributeSubstring = "public::"
 
-func loadPublicPages(appFS afero.Fs, logseqFolder string) ([]rawPage, error) {
+func loadPublicPages(appFS afero.Fs, logseqFolder string) ([]textFile, error) {
 	logseqPagesFolder := path.Join(logseqFolder, "pages")
 	// Find all files that contain `public::`
 	var publicFiles []string
@@ -70,15 +72,15 @@ func loadPublicPages(appFS afero.Fs, logseqFolder string) ([]rawPage, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error during walking through the logseq folder (%q): %w", logseqPagesFolder, err)
 	}
-	pages := make([]rawPage, 0, len(publicFiles))
+	pages := make([]textFile, 0, len(publicFiles))
 	for _, publicFile := range publicFiles {
 		srcContent, err := afero.ReadFile(appFS, publicFile)
 		if err != nil {
 			return nil, fmt.Errorf("reading the %q file failed: %w", publicFile, err)
 		}
-		pages = append(pages, rawPage{
-			fullPath: publicFile,
-			content:  string(srcContent),
+		pages = append(pages, textFile{
+			absoluteFSPath: publicFile,
+			content:        string(srcContent),
 		})
 	}
 	return pages, nil
@@ -98,18 +100,16 @@ func Run(args []string) error {
 	if err != nil {
 		return fmt.Errorf("the configuration could not be parsed: %w", err)
 	}
+
 	publicPages, err := loadPublicPages(appFS, config.LogseqFolder)
 	if err != nil {
 		return fmt.Errorf("Error during walking through a folder %v", err)
 	}
 
+	// parse pages
 	exportPages := make([]parsedPage, 0, len(publicPages))
 	for _, publicPage := range publicPages {
-		pc := parseContent(publicPage.content)
-		exportPages = append(exportPages, parsedPage{
-			originalPath: publicPage.fullPath,
-			pc:           pc,
-		})
+		exportPages = append(exportPages, parsePage(publicPage))
 	}
 
 	err = exportAssets(appFS, config.OutputFolder, exportPages)
@@ -126,7 +126,8 @@ func Run(args []string) error {
 		}
 		// TODO: more processing on the content (linking pages, attributes)
 		finalContent := replaceAssetPaths(page)
-		err = afero.WriteFile(appFS, exportPath, []byte(finalContent), 0644)
+		// TODO find out what properties should I not quote
+		err = afero.WriteFile(appFS, exportPath, []byte(render(page.pc.attributes, finalContent, []string{"public"})), 0644)
 		if err != nil {
 			return fmt.Errorf("copying file %q failed: %v", exportPath, err)
 		}
@@ -180,8 +181,8 @@ func getExportPath(originalPath string, config *Config) string {
 	return path.Join(config.OutputFolder, "logseq-pages", fileName)
 }
 
-func exportPublicPage(appFS afero.Fs, rawPage rawPage, config *Config) error {
-	_, name := filepath.Split(rawPage.fullPath)
+func exportPublicPage(appFS afero.Fs, rawPage textFile, config *Config) error {
+	_, name := filepath.Split(rawPage.absoluteFSPath)
 	page := parsePageOld(name, rawPage.content)
 	result := transformPage(page, config.WebAssetsPathPrefix)
 	dest := filepath.Join(config.OutputFolder, result.filename)
@@ -190,7 +191,7 @@ func exportPublicPage(appFS afero.Fs, rawPage rawPage, config *Config) error {
 	if err != nil {
 		return fmt.Errorf("creating parent directory for %q failed: %v", dest, err)
 	}
-	outputFileContent := render(result, config.UnquotedProperties)
+	outputFileContent := render(result.attributes, result.text, config.UnquotedProperties)
 	err = afero.WriteFile(appFS, dest, []byte(outputFileContent), 0644)
 	if err != nil {
 		return fmt.Errorf("copying file %q failed: %v", dest, err)
@@ -205,19 +206,19 @@ func parseUnquotedProperties(param string) []string {
 	return strings.Split(param, ",")
 }
 
-func render(p oldPage, dontQuote []string) string {
-	sortedKeys := make([]string, 0, len(p.attributes))
-	for k := range p.attributes {
+func render(attributes map[string]string, content string, dontQuote []string) string {
+	sortedKeys := make([]string, 0, len(attributes))
+	for k := range attributes {
 		sortedKeys = append(sortedKeys, k)
 	}
 	slices.Sort(sortedKeys)
 	attributeBuilder := strings.Builder{}
 	for _, key := range sortedKeys {
 		if slices.Contains(dontQuote, key) {
-			attributeBuilder.WriteString(fmt.Sprintf("%s: %s\n", key, p.attributes[key]))
+			attributeBuilder.WriteString(fmt.Sprintf("%s: %s\n", key, attributes[key]))
 		} else {
-			attributeBuilder.WriteString(fmt.Sprintf("%s: %q\n", key, p.attributes[key]))
+			attributeBuilder.WriteString(fmt.Sprintf("%s: %q\n", key, attributes[key]))
 		}
 	}
-	return fmt.Sprintf("---\n%s---\n%s", attributeBuilder.String(), p.text)
+	return fmt.Sprintf("---\n%s---\n%s", attributeBuilder.String(), content)
 }

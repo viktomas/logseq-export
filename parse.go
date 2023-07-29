@@ -2,12 +2,24 @@ package main
 
 import (
 	"fmt"
+	"path/filepath"
 	"regexp"
 	"strings"
 )
 
+func parsePage(publicPage textFile) parsedPage {
+	pc := parseContent(publicPage.content)
+	return parsedPage{
+		originalPath: publicPage.absoluteFSPath,
+		title:        parseTitle(pc, publicPage.absoluteFSPath),
+		pc:           pc,
+	}
+}
+
+var attrAndContentRegexp = regexp.MustCompile(`^((?:.*?::.*\n)*)\n?((?:.|\s)+)?$`)
+
 func parseAttributes(rawContent string) map[string]string {
-	result := regexp.MustCompile(`^((?:.*?::.*\n)*)\n?((?:.|\s)+)$`).FindStringSubmatch(rawContent)
+	result := attrAndContentRegexp.FindStringSubmatch(rawContent)
 	attrArray := regexp.MustCompile(`(?m:^(.*?)::\s*(.*)$)`).FindAllStringSubmatch(result[1], -1)
 	attributes := map[string]string{}
 	for _, attrStrings := range attrArray {
@@ -17,7 +29,7 @@ func parseAttributes(rawContent string) map[string]string {
 }
 
 func stripAttributes(rawContent string) string {
-	result := regexp.MustCompile(`^((?:.*?::.*\n)*)\n?((?:.|\s)+)$`).FindStringSubmatch(rawContent)
+	result := attrAndContentRegexp.FindStringSubmatch(rawContent)
 	return result[2]
 }
 
@@ -70,6 +82,15 @@ func applyStringTransformers(from string, transformers ...func(string) string) s
 		result = t(result)
 	}
 	return result
+}
+
+func parseTitle(pc parsedContent, absoluteFSPath string) string {
+	title, ok := pc.attributes["title"]
+	fileName := filepath.Base(absoluteFSPath)
+	if !ok {
+		title = regexp.MustCompile(`\.[^.]*$`).ReplaceAllString(fileName, "")
+	}
+	return title
 }
 
 func parseContent(rawContent string) parsedContent {
