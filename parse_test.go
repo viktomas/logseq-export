@@ -33,18 +33,6 @@ func TestStripAttributes(t *testing.T) {
 	require.Equal(t, textPart, textWithoutAttributes)
 }
 
-func TestParsePageOld(t *testing.T) {
-	parsedPage := parsePageOld("Blog article%3A hello %26 world", rawContent)
-	assert.Equal(t, oldPage{
-		filename: "Blog article%3A hello %26 world",
-		attributes: map[string]string{
-			"public": "true",
-			"title":  "Blog article: hello & world",
-		},
-		text: textPart,
-	}, parsedPage)
-}
-
 func TestParseAssets(t *testing.T) {
 	t.Run("extracts relative images", func(t *testing.T) {
 		content := "- ![hello world](../assets/image.png)"
@@ -80,6 +68,32 @@ func TestParsePage(t *testing.T) {
 		require.Equal(t, "title from page prop", result.title)
 	})
 
+	t.Run("uses sanitized filename as the exportFileName", func(t *testing.T) {
+		testPage := textFile{
+			absoluteFSPath: "/Blog idea%3A All good laws that EU brought.md",
+			content:        "",
+		}
+		result := parsePage(testPage)
+		require.Equal(t, "Blog-idea%3A-All-good-laws-that-EU-brought.md", result.exportFilename)
+	})
+
+	t.Run("uses slug as the exportFileName", func(t *testing.T) {
+		testPage := textFile{
+			absoluteFSPath: "/name with space.md",
+			content:        "slug:: slug-name\n",
+		}
+		result := parsePage(testPage)
+		require.Equal(t, "slug-name.md", result.exportFilename)
+	})
+
+	t.Run("uses date and slug as the exportFileName", func(t *testing.T) {
+		testPage := textFile{
+			absoluteFSPath: "/name with space.md",
+			content:        "slug:: slug-name\ndate:: 2023-07-29\n",
+		}
+		result := parsePage(testPage)
+		require.Equal(t, "2023-07-29-slug-name.md", result.exportFilename)
+	})
 }
 
 func TestParseContent(t *testing.T) {

@@ -5,12 +5,17 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"sort"
 	"testing"
 
 	"github.com/spf13/afero"
 	"github.com/stretchr/testify/require"
 )
+
+// get path to the directory where this test file lives
+var _, testFilepath, _, _ = runtime.Caller(0)
+var testDir = filepath.Dir(testFilepath)
 
 func TestLoadPublicPages(t *testing.T) {
 	appFS := afero.NewMemMapFs()
@@ -33,11 +38,6 @@ func TestLoadPublicPages(t *testing.T) {
 
 func expectIdenticalContent(t testing.TB, expectedPath, actualPath string) {
 	t.Helper()
-
-	if filepath.Ext(expectedPath) != ".md" {
-		t.Logf("Not comparing content of %s because it's not an md file", expectedPath)
-		return
-	}
 
 	expectedContentBytes, err := os.ReadFile(expectedPath)
 	if err != nil {
@@ -62,9 +62,20 @@ func makeRelative(t testing.TB, parent string, paths []string) []string {
 	return result
 }
 
+var expectedAssets = []string{
+	"logseq-assets/img-1.jpg",
+	"logseq-assets/picture-2.png",
+}
+
+var expectedPages = []string{
+	"logseq-pages/2023-07-29-not-so-complex.md",
+	"logseq-pages/A.md",
+	"logseq-pages/B.md",
+}
+
 func TestFullTransformation(t *testing.T) {
 	deleteTestOutputFolder(t)
-	testLogseqFolder := path.Join(path.Dir(t.Name()), "test", "logseq-folder")
+	testLogseqFolder := path.Join(testDir, "test", "logseq-folder")
 	testOutputFolder := getTestOutputFolder(t)
 	args := []string{
 		"logseq-export",
@@ -76,23 +87,25 @@ func TestFullTransformation(t *testing.T) {
 	err := Run(args)
 	require.NoError(t, err)
 
-	expectedOutputFolder := path.Join(path.Dir(t.Name()), "test", "expected-output")
-
-	expectedFiles := listFilesInFolder(t, expectedOutputFolder)
 	actualFiles := listFilesInFolder(t, testOutputFolder)
 
 	t.Run("the files are moved correctly", func(t *testing.T) {
 		require.Equal(
 			t,
-			makeRelative(t, expectedOutputFolder, expectedFiles),
+			append(expectedAssets, expectedPages...),
 			makeRelative(t, testOutputFolder, actualFiles),
 			"The list of files in output folder is different from what the test expected",
 		)
 	})
 
 	t.Run("the files get transformed correctly", func(t *testing.T) {
-		for i := 0; i < len(expectedFiles); i++ {
-			expectIdenticalContent(t, expectedFiles[i], actualFiles[i])
+		expectedOutputFolder := path.Join(testDir, "test", "expected-output")
+		for i := 0; i < len(expectedPages); i++ {
+			expectIdenticalContent(
+				t,
+				filepath.Join(expectedOutputFolder, expectedPages[i]),
+				filepath.Join(testOutputFolder, expectedPages[i]),
+			)
 		}
 	})
 }
@@ -171,7 +184,7 @@ func listFilesInFolder(t *testing.T, folderPath string) []string {
 
 func getTestOutputFolder(t testing.TB) string {
 	t.Helper()
-	return path.Join(path.Dir(t.Name()), "test", "test-output")
+	return path.Join(testDir, "test", "test-output")
 }
 
 func deleteTestOutputFolder(t *testing.T) {

@@ -14,13 +14,6 @@ import (
 	"golang.org/x/exp/slices"
 )
 
-type oldPage struct {
-	filename   string
-	attributes map[string]string
-	assets     []string
-	text       string
-}
-
 /* textFile captures all data about a text file stored on disk that we need for exporting logseq graph */
 type textFile struct {
 	absoluteFSPath string
@@ -35,9 +28,10 @@ type parsedContent struct {
 }
 
 type parsedPage struct {
-	title        string
-	originalPath string
-	pc           parsedContent
+	title          string
+	exportFilename string
+	originalPath   string
+	pc             parsedContent
 }
 
 const publicAttributeSubstring = "public::"
@@ -118,7 +112,7 @@ func Run(args []string) error {
 	}
 
 	for _, page := range exportPages {
-		exportPath := getExportPath(page.originalPath, config)
+		exportPath := getExportPath(page.exportFilename, config)
 		folder, _ := filepath.Split(exportPath)
 		err = appFS.MkdirAll(folder, os.ModePerm)
 		if err != nil {
@@ -177,27 +171,8 @@ func replaceAssetPaths(p parsedPage) string {
 	return newContent
 }
 
-func getExportPath(originalPath string, config *Config) string {
-	fileName := path.Base(originalPath)
-	return path.Join(config.OutputFolder, "logseq-pages", fileName)
-}
-
-func exportPublicPage(appFS afero.Fs, rawPage textFile, config *Config) error {
-	_, name := filepath.Split(rawPage.absoluteFSPath)
-	page := parsePageOld(name, rawPage.content)
-	result := transformPage(page)
-	dest := filepath.Join(config.OutputFolder, result.filename)
-	folder, _ := filepath.Split(dest)
-	err := appFS.MkdirAll(folder, os.ModePerm)
-	if err != nil {
-		return fmt.Errorf("creating parent directory for %q failed: %v", dest, err)
-	}
-	outputFileContent := render(result.attributes, result.text, config.UnquotedProperties)
-	err = afero.WriteFile(appFS, dest, []byte(outputFileContent), 0644)
-	if err != nil {
-		return fmt.Errorf("copying file %q failed: %v", dest, err)
-	}
-	return nil
+func getExportPath(filename string, config *Config) string {
+	return path.Join(config.OutputFolder, "logseq-pages", filename)
 }
 
 func parseUnquotedProperties(param string) []string {

@@ -10,10 +10,32 @@ import (
 func parsePage(publicPage textFile) parsedPage {
 	pc := parseContent(publicPage.content)
 	return parsedPage{
-		originalPath: publicPage.absoluteFSPath,
-		title:        parseTitle(pc, publicPage.absoluteFSPath),
-		pc:           pc,
+		exportFilename: generateFileName(publicPage.absoluteFSPath, pc.attributes),
+		originalPath:   publicPage.absoluteFSPath,
+		title:          parseTitle(pc, publicPage.absoluteFSPath),
+		pc:             pc,
 	}
+}
+
+func sanitizeName(orig string) string {
+	return strings.ReplaceAll(orig, " ", "-")
+}
+
+func generateFileName(originalPath string, attributes map[string]string) string {
+	originalName := filepath.Base(originalPath)
+	slug, slugPresent := attributes["slug"]
+	if !slugPresent {
+		return sanitizeName(originalName)
+	}
+
+	if date, ok := attributes["date"]; ok {
+		return fmt.Sprintf("%s.md", strings.Join(
+			[]string{date, slug},
+			"-",
+		))
+	}
+
+	return fmt.Sprintf("%s.md", slug)
 }
 
 var attrAndContentRegexp = regexp.MustCompile(`^((?:.*?::.*\n)*)\n?((?:.|\s)+)?$`)
@@ -106,15 +128,6 @@ func parseContent(rawContent string) parsedContent {
 		attributes: parseAttributes(rawContent),
 		content:    content,
 		assets:     parseAssets(rawContent),
-	}
-}
-
-/* Deprecated: use the parseContent instead */
-func parsePageOld(filename, rawContent string) oldPage {
-	return oldPage{
-		filename:   filename,
-		attributes: parseAttributes(rawContent),
-		text:       stripAttributes(rawContent),
 	}
 }
 
