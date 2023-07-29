@@ -12,7 +12,15 @@ Tool to export raw [Logseq](https://github.com/logseq/logseq) Markdown pages (wi
 
 ## Usage
 
-### Command
+The `logseq-export` utility will export the pages into an export folder that can then be imported into your static site generator.
+
+```mermaid
+graph LR;
+LS[Logseq graph] --"logseq-export"--> EF[export folder]
+EF --"import_to_hugo.sh"--> HU[Hugo static site generator]
+```
+
+### Export
 
 ```
 logseq-export
@@ -23,6 +31,8 @@ logseq-export
 ```
 
 This command also expects you have a file called `export.yaml` in your logseq folder.
+
+TODO: remove the assets paths
 
 ```yml
 unquotedProperties:
@@ -43,14 +53,31 @@ This is how I run the command on my machine:
 ```sh
 logseq-export \
   --logseqFolder /Users/tomas/workspace/private/notes \
-  --outputFolder /Users/tomas/workspace/private/blog \
+  --outputFolder /tmp/logseq-export \
 ```
 
-This will take my logseq notes and copies them to blog, it will also copy all the images to `/Users/tomas/workspace/private/blog/static/images/logseq`, but the image links themselves are going to have `/images/logseq` prefix (`![alt](/images/logseq/image.png)`).
+This will take my logseq notes and copies them to the export folder, it will also copy all the images to `/tmp/logseq-export/logseq-assets`, but the image links themselves are going to have `/logseq-asstes/` prefix (`![alt](/logseq/assets/image.png)`).
 
-### Contstraints
+#### Constraints
 
 - `logseq-export` assumes that all the pages you want to export are in `pages/` folder inside your `logseqFolder`.
+
+
+### Import
+
+```sh
+# these environment variables are optional
+# the values in this example are default values
+export BLOG_CONTENT_FODLER="/graph"
+export BLOG_IMAGES_FOLDER="/assets/graph"
+
+# copies pages from `/tmp/logseq/export/logseq-pages` to `~/workspace/private/blog/content/graph`
+# copies assets from `/tmp/logseq/export/logseq-assets` to `~/workspace/private/blog/static/assets/graph`
+# replaces all `/logseq-assets` in all image URLs with `/assets/graph`
+./import_to_hugo.sh \
+  /tmp/logseq-export
+  ~/workspace/private/blog
+```
 
 ### Logseq page properties with a special meaning (all optional)
 
@@ -69,7 +96,7 @@ This will take my logseq notes and copies them to blog, it will also copy all th
 
 ## To
 
-`content/posts/2022-09-25-test-page.md` :
+`content/graph/2022-09-25-test-page.md` :
 
 ~~~md
 ---
@@ -77,7 +104,6 @@ date: 2022-09-25
 categories: "category"
 public: true
 slug: test-page
-folder: "content/posts"
 ---
 
 This is an example paragraph
