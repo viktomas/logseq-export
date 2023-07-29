@@ -1,5 +1,6 @@
 ---
 public: true
+title: "A"
 ---
 
 This is a test file A

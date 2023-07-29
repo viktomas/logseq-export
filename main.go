@@ -124,6 +124,7 @@ func Run(args []string) error {
 		if err != nil {
 			return fmt.Errorf("creating parent directory for %q failed: %v", exportPath, err)
 		}
+		page.pc.attributes["title"] = page.title
 		// TODO: more processing on the content (linking pages, attributes)
 		finalContent := replaceAssetPaths(page)
 		// TODO find out what properties should I not quote
