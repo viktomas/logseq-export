@@ -32,19 +32,12 @@ logseq-export
 
 This command also expects you have a file called `export.yaml` in your logseq folder.
 
-TODO: remove the assets paths
-
 ```yml
+# list of logseq page properties that won't be quoted in the markdown front matter
 unquotedProperties:
   - date
   - tags
-assetsRelativePath: "static/images/logseq"
-webAssetsPathPrefix: "/images/logseq"
 ```
-
-- `assetsRelativePath` relative path within blogFolder where the assets (images) should be stored (e.g. 'static/images/logseq'). Default is logseq-images (default "logseq-images")
-- `webAssetsPathPrefix` path that the images are going to be served on on the web (e.g. '/public/images/logseq'). Default is /logseq-images (default "/logseq-images")
-- `unquotedProperties` list of logseq page properties that won't be quoted in the markdown frontmatter
 
 #### Command example
 

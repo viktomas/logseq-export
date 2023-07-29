@@ -14,11 +14,9 @@ import (
 )
 
 type Config struct {
-	LogseqFolder        string
-	OutputFolder        string
-	UnquotedProperties  []string
-	AssetsRelativePath  string
-	WebAssetsPathPrefix string
+	LogseqFolder       string
+	OutputFolder       string
+	UnquotedProperties []string
 }
 
 func (c *Config) Validate() error {

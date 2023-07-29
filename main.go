@@ -185,7 +185,7 @@ func getExportPath(originalPath string, config *Config) string {
 func exportPublicPage(appFS afero.Fs, rawPage textFile, config *Config) error {
 	_, name := filepath.Split(rawPage.absoluteFSPath)
 	page := parsePageOld(name, rawPage.content)
-	result := transformPage(page, config.WebAssetsPathPrefix)
+	result := transformPage(page)
 	dest := filepath.Join(config.OutputFolder, result.filename)
 	folder, _ := filepath.Split(dest)
 	err := appFS.MkdirAll(folder, os.ModePerm)

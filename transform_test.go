@@ -43,7 +43,7 @@ func transformText(from string) string {
 		attributes: map[string]string{},
 		text:       from,
 	}
-	result := transformPage(testPage, "")
+	result := transformPage(testPage)
 	return result.text
 }
 
@@ -58,7 +58,7 @@ func TestTransformPage(t *testing.T) {
 			},
 			text: "",
 		}
-		result := transformPage(testPage, "")
+		result := transformPage(testPage)
 		require.Equal(t, "2022-09-24-this-is-a-slug.md", result.filename)
 	})
 
@@ -70,57 +70,8 @@ func TestTransformPage(t *testing.T) {
 			},
 			text: "",
 		}
-		result := transformPage(testPage, "")
+		result := transformPage(testPage)
 		require.Equal(t, filepath.Join("content", "posts", "name-with-space.md"), result.filename)
-	})
-
-}
-
-func TestTransformImages(t *testing.T) {
-	t.Run("extracts relative images", func(t *testing.T) {
-		testPage := oldPage{
-			filename: "a.md",
-			text:     "- ![hello world](../assets/image.png)",
-		}
-		result := transformPage(testPage, "/images")
-		require.Equal(t, []string{"../assets/image.png"}, result.assets)
-		require.Equal(t, "- ![hello world](/images/image.png)", result.text)
-	})
-
-	t.Run("ignores absolute images", func(t *testing.T) {
-		testPage := oldPage{
-			filename: "a.md",
-			text:     "- ![hello world](http://example.com/assets/image.png)",
-		}
-		result := transformPage(testPage, "/images")
-		require.Equal(t, 0, len(result.assets))
-		require.Equal(t, "- ![hello world](http://example.com/assets/image.png)", result.text)
-	})
-
-	t.Run("extracts relative images from image attribute", func(t *testing.T) {
-		testPage := oldPage{
-			attributes: map[string]string{
-				"image": "../assets/image.png",
-			},
-			filename: "a.md",
-			text:     "",
-		}
-		result := transformPage(testPage, "/images")
-		require.Equal(t, []string{"../assets/image.png"}, result.assets)
-		require.Equal(t, "/images/image.png", result.attributes["image"])
-	})
-
-	t.Run("ignores absolute images in image attribute", func(t *testing.T) {
-		testPage := oldPage{
-			attributes: map[string]string{
-				"image": "http://example.com/assets/image.png",
-			},
-			filename: "a.md",
-			text:     "",
-		}
-		result := transformPage(testPage, "/images")
-		require.Equal(t, 0, len(result.assets))
-		require.Equal(t, "http://example.com/assets/image.png", result.attributes["image"])
 	})
 
 }

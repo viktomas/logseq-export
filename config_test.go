@@ -61,12 +61,4 @@ func TestTestParsingOptionalFlags(t *testing.T) {
 	if !reflect.DeepEqual(config.UnquotedProperties, []string{"date", "tags"}) {
 		t.Fatalf("incorrectly parsed unquotedProperties. Expected date, tags, got %v", config.UnquotedProperties)
 	}
-
-	if config.AssetsRelativePath != "static/images/logseq" {
-		t.Fatalf("incorrectly parsed assetsRelativePath. Expected 'static/images/logseq' got %v", config.AssetsRelativePath)
-	}
-
-	if config.WebAssetsPathPrefix != "/images/logseq" {
-		t.Fatalf("incorrectly parsed webAssetsPathPrefix. Expected '/images/logseq' got %v", config.WebAssetsPathPrefix)
-	}
 }
