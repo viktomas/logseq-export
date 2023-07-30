@@ -5,7 +5,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"sort"
 	"testing"
 
@@ -14,8 +13,7 @@ import (
 )
 
 // get path to the directory where this test file lives
-var _, testFilepath, _, _ = runtime.Caller(0)
-var testDir = filepath.Dir(testFilepath)
+var testDir, _ = os.Getwd()
 
 func TestLoadPublicPages(t *testing.T) {
 	appFS := afero.NewMemMapFs()
