@@ -68,13 +68,22 @@ func TestParsePage(t *testing.T) {
 		require.Equal(t, "title from page prop", result.pc.attributes["title"])
 	})
 
+	t.Run("uses unescaped filename title", func(t *testing.T) {
+		testPage := textFile{
+			absoluteFSPath: "/Blog idea%3A All good laws that EU brought.md",
+			content:        "",
+		}
+		result := parsePage(testPage)
+		require.Equal(t, "Blog idea: All good laws that EU brought", result.pc.attributes["title"])
+	})
+
 	t.Run("uses sanitized filename as the exportFileName", func(t *testing.T) {
 		testPage := textFile{
 			absoluteFSPath: "/Blog idea%3A All good laws that EU brought.md",
 			content:        "",
 		}
 		result := parsePage(testPage)
-		require.Equal(t, "blog-idea%3a-all-good-laws-that-eu-brought.md", result.exportFilename)
+		require.Equal(t, "blog-idea-all-good-laws-that-eu-brought.md", result.exportFilename)
 	})
 
 	t.Run("uses slug as the exportFileName", func(t *testing.T) {

@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"net/url"
 	"path/filepath"
 	"regexp"
 	"strings"
@@ -9,9 +11,17 @@ import (
 
 func parsePage(publicPage textFile) parsedPage {
 	pc := parseContent(publicPage.content)
-	exportFilename := generateFileName(publicPage.absoluteFSPath, pc.attributes)
-	ensureSlugInAttributes(pc, exportFilename)
-	title := parseTitle(pc, publicPage.absoluteFSPath)
+	exportFilename := getExportFilename(publicPage.absoluteFSPath, pc.attributes)
+	// add slug attribute if missing
+	if _, ok := pc.attributes["slug"]; !ok {
+		pc.attributes["slug"] = filenameWithoutExt(exportFilename)
+	}
+	// add title attribute if missing
+	title, ok := pc.attributes["title"]
+	if !ok {
+		fileName := filepath.Base(publicPage.absoluteFSPath)
+		title = getTitleFromFilename(fileName)
+	}
 	pc.attributes["title"] = title
 	return parsedPage{
 		exportFilename: exportFilename,
@@ -20,17 +30,30 @@ func parsePage(publicPage textFile) parsedPage {
 	}
 }
 
-func ensureSlugInAttributes(pc parsedContent, exportFilename string) {
-	if _, ok := pc.attributes["slug"]; !ok {
-		pc.attributes["slug"] = exportFilename[:len(exportFilename)-len(filepath.Ext(exportFilename))]
+func filenameWithoutExt(filename string) string {
+	return filename[:len(filename)-len(filepath.Ext(filename))]
+}
+
+func getTitleFromFilename(orig string) string {
+	nameOnly := filenameWithoutExt(orig)
+	unescaped, err := url.QueryUnescape(nameOnly)
+	if err != nil {
+		log.Printf("note name %q can't be unescaped because the %% sign is not followed by two hexadecimal characters", orig)
+		unescaped = orig
 	}
+	return unescaped
 }
 
 func sanitizeName(orig string) string {
-	return strings.ToLower(strings.ReplaceAll(orig, " ", "-"))
+	ext := filepath.Ext(orig)
+	title := getTitleFromFilename(orig)
+
+	nonWordChars := regexp.MustCompile(`\W+`)
+	sanitizedName := strings.ToLower(nonWordChars.ReplaceAllString(title, "-"))
+	return strings.Join([]string{sanitizedName, ext}, "")
 }
 
-func generateFileName(originalPath string, attributes map[string]string) string {
+func getExportFilename(originalPath string, attributes map[string]string) string {
 	originalName := filepath.Base(originalPath)
 	slug, slugPresent := attributes["slug"]
 	if !slugPresent {
@@ -113,15 +136,6 @@ func applyStringTransformers(from string, transformers ...func(string) string) s
 		result = t(result)
 	}
 	return result
-}
-
-func parseTitle(pc parsedContent, absoluteFSPath string) string {
-	title, ok := pc.attributes["title"]
-	fileName := filepath.Base(absoluteFSPath)
-	if !ok {
-		title = regexp.MustCompile(`\.[^.]*$`).ReplaceAllString(fileName, "")
-	}
-	return title
 }
 
 func parseContent(rawContent string) parsedContent {
