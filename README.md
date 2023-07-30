@@ -5,6 +5,8 @@ Tool to export raw [Logseq](https://github.com/logseq/logseq) Markdown pages (wi
 - Takes Logseq page properties (`title:: Hello world`) and turns them into [Front Matter properties](https://gohugo.io/content-management/front-matter/) `title: Hello World`.
 - Changes the Markdown syntax to remove the top-level bullet points.
 
+**Note: I completely reworked `logseq-export` to be a bit more versatile and universal. See the [version `v0.0.3`](https://github.com/viktomas/logseq-export/tree/v0.0.3) if you are not ready to move on.**
+
 ## Install
 
 - Download the latest binary for your OS in the [Releases](https://github.com/viktomas/logseq-export/releases) page
@@ -30,7 +32,7 @@ logseq-export
         [MANDATORY] Path to the root of your logseq graph containing /pages and /journals directories.
 ```
 
-This command also expects you have a file called `export.yaml` in your logseq folder.
+*Optional* configuration is in a file called `export.yaml` in your logseq folder.
 
 ```yml
 # list of logseq page properties that won't be quoted in the markdown front matter
@@ -75,14 +77,10 @@ export BLOG_IMAGES_FOLDER="/assets/graph"
 ### Logseq page properties with a special meaning (all optional)
 
 - `public` - as soon as this page property is present (regardless of value), the page gets exported
+- `title` - either the `title::` is present and used as `title:` front matter attribute, or the page file name is unescaped (e.g. `%3A` changes to `:`) and used as the `title:`
 - `slug` used as a file name
 - `date` it's used as a file name prefix
   - if your logseq `date::` attributes contains the link brackets e.g. `[[2023-07-30]]`, `logseq-export` will remove them
-- `folder` the page is going to be exported in this subfolder e.g. `content/posts`
-  - the `folder` property always uses `/` (forward slash) but on Windows, it gets translated to `\` in folder path
-  - if the base export folder is `a` and the `folder` page property is `b/c`, then the resulting page will be in `a/b/c` folder
-- `image` The value of this property behaves the same way as all Markdown images.
-  - if the `image` property contains `../assets/post-image.jpg`, and we run the `logseq-export` with `--webAssetsPathPrefix /images/logseq -assetsRelativePath static/images/logseq` flags, the resulting Markdown post will have front-matter attribute `image: /images/logseq/post-image.jpg` and the image will be copied to `static/images/logseq/post-image.jpg` in the blog folder.
 
 ## From
 
@@ -94,17 +92,16 @@ export BLOG_IMAGES_FOLDER="/assets/graph"
 
 ~~~md
 ---
-date: 2022-09-25
-categories: "category"
+date: "2022-09-25"
 public: true
-slug: test-page
+slug: "test-page"
+title: "Test page"
 ---
 
 This is an example paragraph
 
 - Second level means bullet points
-
-- `logseq-export` also supports multi-level bullet points
+	- `logseq-export` also supports multi-level bullet points
 
 ```ts
 const v = "Hello world"

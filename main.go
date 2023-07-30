@@ -138,7 +138,12 @@ func Run(args []string) error {
 			)
 		}
 		// TODO find out what properties should I not quote
-		err = afero.WriteFile(appFS, exportPath, []byte(render(page.pc.attributes, contentWithAssets, []string{"public"})), 0644)
+		err = afero.WriteFile(
+			appFS,
+			exportPath,
+			[]byte(render(page.pc.attributes, contentWithAssets, config.UnquotedProperties)),
+			0644,
+		)
 		if err != nil {
 			return fmt.Errorf("copying file %q failed: %v", exportPath, err)
 		}
