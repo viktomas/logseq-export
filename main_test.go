@@ -69,8 +69,8 @@ var expectedAssets = []string{
 
 var expectedPages = []string{
 	"logseq-pages/2023-07-29-not-so-complex.md",
-	"logseq-pages/A.md",
-	"logseq-pages/B.md",
+	"logseq-pages/a.md",
+	"logseq-pages/b.md",
 }
 
 func TestFullTransformation(t *testing.T) {

@@ -74,7 +74,7 @@ func TestParsePage(t *testing.T) {
 			content:        "",
 		}
 		result := parsePage(testPage)
-		require.Equal(t, "Blog-idea%3A-All-good-laws-that-EU-brought.md", result.exportFilename)
+		require.Equal(t, "blog-idea%3a-all-good-laws-that-eu-brought.md", result.exportFilename)
 	})
 
 	t.Run("uses slug as the exportFileName", func(t *testing.T) {

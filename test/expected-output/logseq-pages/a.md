@@ -1,6 +1,6 @@
 ---
 public: true
-slug: "A"
+slug: "a"
 title: "A"
 ---
 
