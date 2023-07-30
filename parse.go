@@ -72,12 +72,20 @@ func getExportFilename(originalPath string, attributes map[string]string) string
 
 var attrAndContentRegexp = regexp.MustCompile(`^((?:.*?::.*\n)*)\n?((?:.|\s)+)?$`)
 
+var dateLinkRegexp = regexp.MustCompile(`^\s*\[\[([^]]+?)]]\s*$`)
+
 func parseAttributes(rawContent string) map[string]string {
 	result := attrAndContentRegexp.FindStringSubmatch(rawContent)
 	attrArray := regexp.MustCompile(`(?m:^(.*?)::\s*(.*)$)`).FindAllStringSubmatch(result[1], -1)
 	attributes := map[string]string{}
 	for _, attrStrings := range attrArray {
 		attributes[attrStrings[1]] = attrStrings[2]
+	}
+	// remove link brackets from the date
+	// [[2023-07-30]] -> 2023-07-30
+	dateMatch := dateLinkRegexp.FindStringSubmatch(attributes["date"])
+	if len(dateMatch) > 0 {
+		attributes["date"] = dateMatch[1]
 	}
 	return attributes
 }

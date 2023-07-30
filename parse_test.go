@@ -124,6 +124,12 @@ func TestParsePage(t *testing.T) {
 }
 
 func TestParseContent(t *testing.T) {
+	t.Run("removes square brackets from date", func(t *testing.T) {
+		result := parseContent("date:: [[2023-07-30]]\n")
+		require.Equal(t, "", result.content)
+		require.Equal(t, "2023-07-30", result.attributes["date"])
+	})
+
 	t.Run("parses page with only one attribute", func(t *testing.T) {
 		result := parseContent("public:: true\n")
 		require.Equal(t, "", result.content)

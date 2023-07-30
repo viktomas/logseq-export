@@ -77,11 +77,12 @@ export BLOG_IMAGES_FOLDER="/assets/graph"
 - `public` - as soon as this page property is present (regardless of value), the page gets exported
 - `slug` used as a file name
 - `date` it's used as a file name prefix
+  - if your logseq `date::` attributes contains the link brackets e.g. `[[2023-07-30]]`, `logseq-export` will remove them
 - `folder` the page is going to be exported in this subfolder e.g. `content/posts`
   - the `folder` property always uses `/` (forward slash) but on Windows, it gets translated to `\` in folder path
   - if the base export folder is `a` and the `folder` page property is `b/c`, then the resulting page will be in `a/b/c` folder
 - `image` The value of this property behaves the same way as all Markdown images.
-  - if the `image` property contains `../assets/post-image.jpg`, and we run the `logseq-extract` with `--webAssetsPathPrefix /images/logseq -assetsRelativePath static/images/logseq` flags, the resulting Markdown post will have front-matter attribute `image: /images/logseq/post-image.jpg` and the image will be copied to `static/images/logseq/post-image.jpg` in the blog folder.
+  - if the `image` property contains `../assets/post-image.jpg`, and we run the `logseq-export` with `--webAssetsPathPrefix /images/logseq -assetsRelativePath static/images/logseq` flags, the resulting Markdown post will have front-matter attribute `image: /images/logseq/post-image.jpg` and the image will be copied to `static/images/logseq/post-image.jpg` in the blog folder.
 
 ## From
 
