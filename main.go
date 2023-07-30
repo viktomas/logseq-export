@@ -183,7 +183,7 @@ func exportAssets(appFS afero.Fs, outputFolder string, exportPages []parsedPage)
 	for src, dest := range assetSrcAndDest {
 		err = copy(appFS, src, dest)
 		if err != nil {
-			return fmt.Errorf("failed copying asset from %q to %q: %w", src, dest, err)
+			log.Printf("failed copying asset from %q to %q: %v", src, dest, err)
 		}
 	}
 	return nil
