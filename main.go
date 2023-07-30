@@ -29,7 +29,6 @@ type parsedContent struct {
 }
 
 type parsedPage struct {
-	title          string
 	exportFilename string
 	originalPath   string
 	pc             parsedContent
@@ -112,9 +111,9 @@ func Run(args []string) error {
 		return fmt.Errorf("failed to export assets: %w", err)
 	}
 
-	titleToFilename := map[string]string{}
+	titleToSlug := map[string]string{}
 	for _, p := range parsedPages {
-		titleToFilename[p.title] = p.exportFilename
+		titleToSlug[p.pc.attributes["title"]] = p.pc.attributes["slug"]
 	}
 
 	for _, page := range parsedPages {
@@ -124,19 +123,18 @@ func Run(args []string) error {
 		if err != nil {
 			return fmt.Errorf("creating parent directory for %q failed: %v", exportPath, err)
 		}
-		page.pc.attributes["title"] = page.title
 		// TODO: more processing on the content (linking pages, attributes)
 		contentWithAssets := replaceAssetPaths(page)
 		links := detectPageLinks(contentWithAssets)
 		for _, l := range links {
-			linkedFilename, ok := titleToFilename[l]
+			slug, ok := titleToSlug[l]
 			if !ok {
 				continue
 			}
 			contentWithAssets = strings.ReplaceAll(
 				contentWithAssets,
 				fmt.Sprintf("[[%s]]", l),
-				fmt.Sprintf("[%s](%s)", l, filepath.Join("/logseq-pages", linkedFilename)),
+				fmt.Sprintf("[%s](%s)", l, filepath.Join("/logseq-pages", slug)),
 			)
 		}
 		// TODO find out what properties should I not quote

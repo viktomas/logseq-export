@@ -9,11 +9,20 @@ import (
 
 func parsePage(publicPage textFile) parsedPage {
 	pc := parseContent(publicPage.content)
+	exportFilename := generateFileName(publicPage.absoluteFSPath, pc.attributes)
+	ensureSlugInAttributes(pc, exportFilename)
+	title := parseTitle(pc, publicPage.absoluteFSPath)
+	pc.attributes["title"] = title
 	return parsedPage{
-		exportFilename: generateFileName(publicPage.absoluteFSPath, pc.attributes),
+		exportFilename: exportFilename,
 		originalPath:   publicPage.absoluteFSPath,
-		title:          parseTitle(pc, publicPage.absoluteFSPath),
 		pc:             pc,
+	}
+}
+
+func ensureSlugInAttributes(pc parsedContent, exportFilename string) {
+	if _, ok := pc.attributes["slug"]; !ok {
+		pc.attributes["slug"] = exportFilename[:len(exportFilename)-len(filepath.Ext(exportFilename))]
 	}
 }
 

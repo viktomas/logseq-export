@@ -56,7 +56,7 @@ func TestParsePage(t *testing.T) {
 			content:        "",
 		}
 		result := parsePage(testPage)
-		require.Equal(t, "name with space", result.title)
+		require.Equal(t, "name with space", result.pc.attributes["title"])
 	})
 
 	t.Run("uses title page property if present", func(t *testing.T) {
@@ -65,7 +65,7 @@ func TestParsePage(t *testing.T) {
 			content:        "title:: title from page prop\n",
 		}
 		result := parsePage(testPage)
-		require.Equal(t, "title from page prop", result.title)
+		require.Equal(t, "title from page prop", result.pc.attributes["title"])
 	})
 
 	t.Run("uses sanitized filename as the exportFileName", func(t *testing.T) {
@@ -93,6 +93,24 @@ func TestParsePage(t *testing.T) {
 		}
 		result := parsePage(testPage)
 		require.Equal(t, "2023-07-29-slug-name.md", result.exportFilename)
+	})
+
+	t.Run("keeps slug if present", func(t *testing.T) {
+		testPage := textFile{
+			absoluteFSPath: "/name with space.md",
+			content:        "slug:: slug-name\n",
+		}
+		result := parsePage(testPage)
+		require.Equal(t, "slug-name", result.pc.attributes["slug"])
+	})
+
+	t.Run("uses exportFilename as slug", func(t *testing.T) {
+		testPage := textFile{
+			absoluteFSPath: "/name with space.md",
+			content:        "",
+		}
+		result := parsePage(testPage)
+		require.Equal(t, "name-with-space", result.pc.attributes["slug"])
 	})
 }
 

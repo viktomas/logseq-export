@@ -1,5 +1,6 @@
 ---
 public: true
+slug: "B"
 title: "Hello World"
 ---
 
@@ -9,6 +10,6 @@ title: "Hello World"
 
 This is a test file B
 
-[A](/logseq-pages/A.md)
+[A](/logseq-pages/A)
 
-[complex-name](/logseq-pages/2023-07-29-not-so-complex.md)
+[complex-name](/logseq-pages/not-so-complex)

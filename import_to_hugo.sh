@@ -48,6 +48,7 @@ cp -R "$export_folder/logseq-pages"/* "$pages_destination/"
 cp -R "$export_folder/logseq-assets"/* "$assets_destination/"
 
 # replace the /logseq-asstes/ paths with the hugo image folder
-find "$pages_destination" -type f -exec sed -i -e "s@/logseq-assets/@$images_folder/@g" {} \;
+find "$pages_destination" -type f -exec sed -i '' -e "s@/logseq-assets/@$images_folder/@g" {} \;
+find "$pages_destination" -type f -exec sed -i '' -e "s@/logseq-pages/@$blog_content_folder/@g" {} \;
 
 echo "Content moved successfully."
