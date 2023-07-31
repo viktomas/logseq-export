@@ -37,7 +37,7 @@ type parsedPage struct {
 const publicAttributeSubstring = "public::"
 
 func loadPublicPages(appFS afero.Fs, logseqFolder string) ([]textFile, error) {
-	logseqPagesFolder := path.Join(logseqFolder, "pages")
+	logseqPagesFolder := filepath.Join(logseqFolder, "pages")
 	// Find all files that contain `public::`
 	var publicFiles []string
 	err := afero.Walk(appFS, logseqPagesFolder, func(path string, info fs.FileInfo, walkError error) error {
@@ -117,7 +117,7 @@ func Run(args []string) error {
 	}
 
 	for _, page := range parsedPages {
-		exportPath := path.Join(config.OutputFolder, "logseq-pages", page.exportFilename)
+		exportPath := filepath.Join(config.OutputFolder, "logseq-pages", page.exportFilename)
 		folder, _ := filepath.Split(exportPath)
 		err = appFS.MkdirAll(folder, os.ModePerm)
 		if err != nil {
@@ -196,6 +196,7 @@ func replaceAssetPaths(p parsedPage) string {
 	newContent := p.pc.content
 	for _, link := range p.pc.assets {
 		fileName := filepath.Base(link)
+		// we do want to use `path` package here, we are creating web URL
 		newContent = strings.ReplaceAll(newContent, link, path.Join("/logseq-assets", fileName))
 	}
 	return newContent

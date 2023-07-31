@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"path"
+	"path/filepath"
 
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/basicflag"
@@ -61,7 +61,7 @@ func parseConfig(args []string) (*Config, error) {
 
 	logseqFolder := k.String("logseqFolder")
 	// Load YAML config and merge into the previously loaded config (because we can).
-	configPath := path.Join(logseqFolder, "export.yaml")
+	configPath := filepath.Join(logseqFolder, "export.yaml")
 	if err := k.Load(file.Provider(configPath), yaml.Parser()); err != nil {
 		log.Printf("Failed to read config file %q. Using default config.", configPath)
 	}

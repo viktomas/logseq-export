@@ -1,7 +1,7 @@
 package main
 
 import (
-	"path"
+	"path/filepath"
 	"reflect"
 	"testing"
 )
@@ -35,7 +35,7 @@ func TestParseMandatoryFlags(t *testing.T) {
 }
 
 func TestTestParsingOptionalFlags(t *testing.T) {
-	configFolderPath := path.Join(path.Dir(t.Name()), "test/config")
+	configFolderPath := filepath.Join(filepath.Dir(t.Name()), "test/config")
 	args := []string{
 		"script-name",
 		"--logseqFolder",

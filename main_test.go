@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"os"
-	"path"
 	"path/filepath"
 	"sort"
 	"testing"
@@ -73,7 +72,7 @@ var expectedPages = []string{
 
 func TestFullTransformation(t *testing.T) {
 	deleteTestOutputFolder(t)
-	testLogseqFolder := path.Join(testDir, "test", "logseq-folder")
+	testLogseqFolder := filepath.Join(testDir, "test", "logseq-folder")
 	testOutputFolder := getTestOutputFolder(t)
 	args := []string{
 		"logseq-export",
@@ -97,7 +96,7 @@ func TestFullTransformation(t *testing.T) {
 	})
 
 	t.Run("the files get transformed correctly", func(t *testing.T) {
-		expectedOutputFolder := path.Join(testDir, "test", "expected-output")
+		expectedOutputFolder := filepath.Join(testDir, "test", "expected-output")
 		for i := 0; i < len(expectedPages); i++ {
 			expectIdenticalContent(
 				t,
@@ -182,7 +181,7 @@ func listFilesInFolder(t *testing.T, folderPath string) []string {
 
 func getTestOutputFolder(t testing.TB) string {
 	t.Helper()
-	return path.Join(testDir, "test", "test-output")
+	return filepath.Join(testDir, "test", "test-output")
 }
 
 func deleteTestOutputFolder(t *testing.T) {
