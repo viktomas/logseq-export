@@ -135,7 +135,8 @@ func Run(args []string) error {
 			contentWithAssets = strings.ReplaceAll(
 				contentWithAssets,
 				fmt.Sprintf("[[%s]]", l),
-				fmt.Sprintf("[%s](%s)", l, filepath.Join("/logseq-pages", slug)),
+				// we use path here on purpose since we create URL
+				fmt.Sprintf("[%s](%s)", l, path.Join("/logseq-pages", slug)),
 			)
 		}
 		// TODO find out what properties should I not quote
