@@ -75,14 +75,14 @@ func makeRelative(t testing.TB, parent string, paths []string) []string {
 }
 
 var expectedAssets = []string{
-	"logseq-assets/img-1.jpg",
-	"logseq-assets/picture-2.png",
+	filepath.Join("logseq-assets", "img-1.jpg"),
+	filepath.Join("logseq-assets", "picture-2.png"),
 }
 
 var expectedPages = []string{
-	"logseq-pages/2023-07-29-not-so-complex.md",
-	"logseq-pages/a.md",
-	"logseq-pages/b.md",
+	filepath.Join("logseq-pages", "2023-07-29-not-so-complex.md"),
+	filepath.Join("logseq-pages", "a.md"),
+	filepath.Join("logseq-pages", "b.md"),
 }
 
 func TestFullTransformation(t *testing.T) {
