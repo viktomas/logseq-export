@@ -1,5 +1,10 @@
 # taken from https://github.com/mvdan/github-actions-golang/blob/master/.github/workflows/test.yml
-on: [push, pull_request]
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
 name: Test
 jobs:
   test:
