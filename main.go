@@ -72,9 +72,10 @@ func loadPublicPages(appFS afero.Fs, logseqFolder string) ([]textFile, error) {
 		if err != nil {
 			return nil, fmt.Errorf("reading the %q file failed: %w", publicFile, err)
 		}
+		santitizedContent := strings.ReplaceAll(string(srcContent), "\r", "")
 		pages = append(pages, textFile{
 			absoluteFSPath: publicFile,
-			content:        string(srcContent),
+			content:        santitizedContent,
 		})
 	}
 	return pages, nil

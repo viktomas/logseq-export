@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"testing"
 
 	"github.com/spf13/afero"
@@ -33,18 +34,32 @@ func TestLoadPublicPages(t *testing.T) {
 	})
 }
 
+func TestLoadPublicPagesStripsAwayCarriageReturn(t *testing.T) {
+	appFS := afero.NewMemMapFs()
+	appFS.MkdirAll("/src/pages", 0755)
+	afero.WriteFile(appFS, "/src/pages/b", []byte("public:: true\r\n- a bullet point"), 0644)
+
+	matchingFiles, err := loadPublicPages(appFS, "/src")
+
+	require.Nil(t, err)
+	require.Len(t, matchingFiles, 1)
+	require.Equal(t, filepath.Join("/src", "pages", "b"), matchingFiles[0].absoluteFSPath)
+	require.Equal(t, "public:: true\n- a bullet point", matchingFiles[0].content)
+}
+
 func expectIdenticalContent(t testing.TB, expectedPath, actualPath string) {
 	t.Helper()
 
-	expectedContentBytes, err := os.ReadFile(expectedPath)
-	if err != nil {
-		t.Fatal("Error reading the expected file:", err)
+	readFile := func(path string) string {
+		bytes, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal("Error reading the expected file:", err)
+		}
+		// ignore \r because git adds it to checked out test files
+		return strings.ReplaceAll(string(bytes), "\r", "")
 	}
-	actualContentBytes, err := os.ReadFile(actualPath)
-	if err != nil {
-		t.Fatal("Error reading the actual file:", err)
-	}
-	require.Equal(t, string(expectedContentBytes), string(actualContentBytes), fmt.Sprintf("the content of %s and %s are not identical", expectedPath, actualPath))
+
+	require.Equal(t, readFile(expectedPath), readFile(actualPath), fmt.Sprintf("the content of %s and %s are not identical", expectedPath, actualPath))
 }
 
 func makeRelative(t testing.TB, parent string, paths []string) []string {
