@@ -4,6 +4,8 @@ name: goreleaser
 on:
   pull_request:
   push:
+    tags:
+      - '*' # release every tag
     branches:
       - main
 
