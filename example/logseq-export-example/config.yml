@@ -2,6 +2,11 @@
 baseURL: 'http://example.org/'
 languageCode: 'en-us'
 title: 'Logseq-Export example site'
+menu:
+  main:
+    - name: "<u>H</u>ome"
+      url: /
+      weight: 1
 module:
   imports:
     - path: github.com/barklan/hugo-dead-simple

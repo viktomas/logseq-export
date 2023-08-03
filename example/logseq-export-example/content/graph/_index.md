@@ -4,8 +4,18 @@ slug: _index
 title: "Index"
 ---
 
-Welcome to this example page
+## Welcome
+
+Welcome to this example page.
+
+This site is generated from a [Logseq](https://logseq.com/) graph using [logseq-export](https://github.com/viktomas/logseq-export)
+
+## See other pages
 
 Se how we can link to other pages [Most important page](/graph/most-important-page)
 
 Or see the [Test page](/graph/test-page)
+
+## Credit
+
+This example site uses [Hugo](https://gohugo.io/) with [barklan/hugo-dead-simple](https://github.com/barklan/hugo-dead-simple) theme.
