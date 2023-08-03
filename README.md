@@ -5,6 +5,8 @@ Tool to export raw [Logseq](https://github.com/logseq/logseq) Markdown pages (wi
 - Takes Logseq page properties (`title:: Hello world`) and turns them into [Front Matter properties](https://gohugo.io/content-management/front-matter/) `title: Hello World`.
 - Changes the Markdown syntax to remove the top-level bullet points.
 
+See an **example of a deployed graph** on [viktomas.github.io/logseq-export](https://viktomas.github.io/logseq-export/). The graph and the [Hugo](https://gohugo.io/) project can be found in the [example](/example/) folder.
+
 **Note: I completely reworked `logseq-export` to be a bit more versatile and universal. See the [version `v0.0.3`](https://github.com/viktomas/logseq-export/tree/v0.0.3) if you are not ready to move on.**
 
 ## Install
