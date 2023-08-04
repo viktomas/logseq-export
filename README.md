@@ -5,7 +5,7 @@ Tool to export raw [Logseq](https://github.com/logseq/logseq) Markdown pages (wi
 - Takes Logseq page properties (`title:: Hello world`) and turns them into [Front Matter properties](https://gohugo.io/content-management/front-matter/) `title: Hello World`.
 - Changes the Markdown syntax to remove the top-level bullet points.
 
-See an **example of a deployed graph** on [viktomas.github.io/logseq-export](https://viktomas.github.io/logseq-export/). The graph and the [Hugo](https://gohugo.io/) project can be found in the [example](/example/) folder.
+See an **example of a deployed graph** on [viktomas.github.io/logseq-export](https://viktomas.github.io/logseq-export/). The graph and the [Hugo](https://gohugo.io/) project can be found in the [example](/example/) folder. Run the example locally with ``
 
 **Note: I completely reworked `logseq-export` to be a bit more versatile and universal. See the [version `v0.0.3`](https://github.com/viktomas/logseq-export/tree/v0.0.3) if you are not ready to move on.**
 
@@ -115,3 +115,13 @@ have
 
 Multi-line strings
 ~~~
+
+## Local development
+
+- Have golang installed
+- Use unix or WSL2 on Windows
+- `make build` - builds the binary
+- `make test` - tests the project
+- `make watch-test` - (only on macOS) - run test on every file change
+- `make example` - export the example Logseq graph into the example Hugo site
+- `make watch-example` (only on macOS) - run `make example` on any file change
