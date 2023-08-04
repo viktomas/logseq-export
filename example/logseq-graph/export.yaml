@@ -1,0 +1,11 @@
+---
+unquotedProperties:
+  - date
+  - slug
+  - public
+  - tags
+  - shelves
+  - audiobook
+  - started
+assetsRelativePath: 'static/images/logseq'
+webAssetsPathPrefix: "/images/logseq"

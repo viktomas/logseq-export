@@ -1,0 +1,16 @@
+---
+languageCode: 'en-us'
+title: 'Logseq-Export example site'
+menu:
+  main:
+    - name: "<u>H</u>ome"
+      url: /
+      weight: 1
+module:
+  imports:
+    - path: github.com/barklan/hugo-dead-simple
+# Even though this setting is deprecated, I have to put it in here because GitHub pages
+# prepend the project name (/logseq-export/) to the whole site and the relative links
+# in the graph Markdown files are pointing to /graph/page instead of /logseq-export/graph/page
+# this setting prepends the `baseURL` to each of the links
+canonifyURLs: true
