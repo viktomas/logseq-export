@@ -143,7 +143,7 @@ func Run(args []string) error {
 		err = afero.WriteFile(
 			appFS,
 			exportPath,
-			[]byte(render(page.pc.attributes, contentWithAssets, config.UnquotedProperties)),
+			[]byte(render(transformAttributes(page.pc.attributes, config.UnquotedProperties), contentWithAssets)),
 			0644,
 		)
 		if err != nil {
@@ -151,6 +151,19 @@ func Run(args []string) error {
 		}
 	}
 	return nil
+}
+
+func transformAttributes(attributes map[string]string, dontQuote []string) map[string]string {
+	dontQuote = append(dontQuote, "tags")
+	if _, ok := attributes["tags"]; ok {
+		attributes["tags"] = fmt.Sprintf("[%s]", attributes["tags"])
+	}
+	for name, value := range attributes {
+		if !slices.Contains(dontQuote, name) {
+			attributes[name] = fmt.Sprintf("%q", value)
+		}
+	}
+	return attributes
 }
 
 func detectPageLinks(content string) []string {
@@ -204,14 +217,7 @@ func replaceAssetPaths(p parsedPage) string {
 	return newContent
 }
 
-func parseUnquotedProperties(param string) []string {
-	if param == "" {
-		return []string{}
-	}
-	return strings.Split(param, ",")
-}
-
-func render(attributes map[string]string, content string, dontQuote []string) string {
+func render(attributes map[string]string, content string) string {
 	sortedKeys := make([]string, 0, len(attributes))
 	for k := range attributes {
 		sortedKeys = append(sortedKeys, k)
@@ -219,11 +225,7 @@ func render(attributes map[string]string, content string, dontQuote []string) st
 	slices.Sort(sortedKeys)
 	attributeBuilder := strings.Builder{}
 	for _, key := range sortedKeys {
-		if slices.Contains(dontQuote, key) {
-			attributeBuilder.WriteString(fmt.Sprintf("%s: %s\n", key, attributes[key]))
-		} else {
-			attributeBuilder.WriteString(fmt.Sprintf("%s: %q\n", key, attributes[key]))
-		}
+		attributeBuilder.WriteString(fmt.Sprintf("%s: %s\n", key, attributes[key]))
 	}
 	return fmt.Sprintf("---\n%s---\n%s", attributeBuilder.String(), content)
 }

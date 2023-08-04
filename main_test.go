@@ -85,6 +85,22 @@ var expectedPages = []string{
 	filepath.Join("logseq-pages", "b.md"),
 }
 
+func TestTransformAttributes(t *testing.T) {
+	attributes := map[string]string{
+		"tags":     "tag1, another-tag",
+		"quoted":   "quoted",
+		"unquoted": "unquoted",
+	}
+
+	result := transformAttributes(attributes, []string{"unquoted"})
+
+	require.Equal(t, map[string]string{
+		"tags":     "[tag1, another-tag]",
+		"quoted":   "\"quoted\"",
+		"unquoted": "unquoted",
+	}, result)
+}
+
 func TestFullTransformation(t *testing.T) {
 	deleteTestOutputFolder(t)
 	testLogseqFolder := filepath.Join(testDir, "test", "logseq-folder")
@@ -129,10 +145,10 @@ func TestRender(t *testing.T) {
 			"second": "2",
 		}
 		content := "page text"
-		result := render(attributes, content, []string{})
+		result := render(attributes, content)
 		require.Equal(t, `---
-first: "1"
-second: "2"
+first: 1
+second: 2
 ---
 page text`, result)
 	})
@@ -145,26 +161,13 @@ page text`, result)
 			"a": "1",
 		}
 		content := "page text"
-		result := render(attributes, content, []string{})
+		result := render(attributes, content)
 		require.Equal(t, `---
-a: "1"
-b: "1"
-c: "1"
-d: "1"
-e: "1"
----
-page text`, result)
-	})
-	t.Run("it renders attributes without quotes", func(t *testing.T) {
-		attributes := map[string]string{
-			"first":  "1",
-			"second": "2",
-		}
-		content := "page text"
-		result := render(attributes, content, []string{"first", "second"})
-		require.Equal(t, `---
-first: 1
-second: 2
+a: 1
+b: 1
+c: 1
+d: 1
+e: 1
 ---
 page text`, result)
 	})

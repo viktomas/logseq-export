@@ -40,7 +40,6 @@ logseq-export
 # list of logseq page properties that won't be quoted in the markdown front matter
 unquotedProperties:
   - date
-  - tags
 ```
 
 #### Command example
@@ -80,6 +79,7 @@ export BLOG_IMAGES_FOLDER="/assets/graph"
 
 - `public` - as soon as this page property is present (regardless of value), the page gets exported
 - `title` - either the `title::` is present and used as `title:` front matter attribute, or the page file name is unescaped (e.g. `%3A` changes to `:`) and used as the `title:`
+- `tags` - Logseq uses comma separated values (`tags:: tag1, tag2`) but valid `yaml` in the front matter has to surround the value with square brackets (`tags: [tag1, tag2]`). The `tags` attribute is **always unquoted**.
 - `slug` used as a file name
 - `date` it's used as a file name prefix
   - if your logseq `date::` attributes contains the link brackets e.g. `[[2023-07-30]]`, `logseq-export` will remove them

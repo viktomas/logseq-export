@@ -103,12 +103,8 @@ func firstBulletPointsToParagraphs(from string) string {
 	return regexp.MustCompile(`(?m:^- )`).ReplaceAllString(from, "\n")
 }
 
-func secondToFirstBulletPoints(from string) string {
-	return regexp.MustCompile(`(?m:^\t-)`).ReplaceAllString(from, "\n-")
-}
-
 func removeTabFromMultiLevelBulletPoints(from string) string {
-	return regexp.MustCompile(`(?m:^\t{2,}-)`).ReplaceAllStringFunc(from, func(s string) string {
+	return regexp.MustCompile(`(?m:^\t{1,}-)`).ReplaceAllStringFunc(from, func(s string) string {
 		return s[1:]
 	})
 }
@@ -152,7 +148,6 @@ func parseContent(rawContent string) parsedContent {
 		removeEmptyBulletPoints,
 		unindentMultilineStrings,
 		firstBulletPointsToParagraphs,
-		secondToFirstBulletPoints,
 		removeTabFromMultiLevelBulletPoints,
 	)
 	return parsedContent{

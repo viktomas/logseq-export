@@ -1,6 +1,7 @@
 ---
 public: true
 slug: "b"
+tags: [tag1, another-tag]
 title: "Hello World"
 ---
 

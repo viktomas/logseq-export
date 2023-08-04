@@ -154,7 +154,7 @@ func TestParseContent(t *testing.T) {
 
 	t.Run("turns second level bullet points into first level", func(t *testing.T) {
 		result := parseContent("\t- hello\n\t- world")
-		require.Equal(t, "\n- hello\n\n- world", result.content) // TODO: maybe remove the duplicated new line
+		require.Equal(t, "- hello\n- world", result.content)
 	})
 
 	t.Run("removes one tab from multi-level bullet points", func(t *testing.T) {
