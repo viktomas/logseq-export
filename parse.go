@@ -103,8 +103,8 @@ func firstBulletPointsToParagraphs(from string) string {
 	return regexp.MustCompile(`(?m:^- )`).ReplaceAllString(from, "\n")
 }
 
-func removeTabFromMultiLevelBulletPoints(from string) string {
-	return regexp.MustCompile(`(?m:^\t{1,}-)`).ReplaceAllStringFunc(from, func(s string) string {
+func unindentAllRemainingBulletPoints(from string) string {
+	return regexp.MustCompile(`(?m:^\t{1,}[^\t])`).ReplaceAllStringFunc(from, func(s string) string {
 		return s[1:]
 	})
 }
@@ -148,7 +148,10 @@ func parseContent(rawContent string) parsedContent {
 		removeEmptyBulletPoints,
 		unindentMultilineStrings,
 		firstBulletPointsToParagraphs,
-		removeTabFromMultiLevelBulletPoints,
+		// since we turned the first bullet points to paragraphs
+		// we shift all bullet points by one tab to the left
+		// including subsequent lines for multiline strings
+		unindentAllRemainingBulletPoints,
 	)
 	return parsedContent{
 		attributes: parseAttributes(rawContent),

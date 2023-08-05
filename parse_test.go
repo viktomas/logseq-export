@@ -161,6 +161,30 @@ func TestParseContent(t *testing.T) {
 		result := parseContent("\t\t- hello\n\t\t\t- world")
 		require.Equal(t, "\t- hello\n\t\t- world", result.content)
 	})
+
+	t.Run("handles fenced blocks in second-level bullet points", func(t *testing.T) {
+		result := parseContent(`
+- ## If statement
+	- ~~~bash
+	  if [-a file];then
+	    ...
+	  else
+	    ...
+	  fi
+	  ~~~
+`)
+		require.Equal(t, `
+## If statement
+- ~~~bash
+  if [-a file];then
+    ...
+  else
+    ...
+  fi
+  ~~~
+`, result.content)
+	})
+
 	t.Run("removes tabs from all subsequent lines of a bullet point", func(t *testing.T) {
 		result := parseContent(`
 - ~~~ts
