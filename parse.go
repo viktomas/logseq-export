@@ -76,7 +76,7 @@ var dateLinkRegexp = regexp.MustCompile(`^\s*\[\[([^]]+?)]]\s*$`)
 
 func parseAttributes(rawContent string) map[string]string {
 	result := attrAndContentRegexp.FindStringSubmatch(rawContent)
-	attrArray := regexp.MustCompile(`(?m:^(.*?)::\s*(.*)$)`).FindAllStringSubmatch(result[1], -1)
+	attrArray := regexp.MustCompile(`(?m:^\s*(.*?)::\s*(.*?)$)`).FindAllStringSubmatch(result[1], -1)
 	attributes := map[string]string{}
 	for _, attrStrings := range attrArray {
 		attributes[attrStrings[1]] = attrStrings[2]
@@ -103,7 +103,7 @@ func firstBulletPointsToParagraphs(from string) string {
 	return regexp.MustCompile(`(?m:^- )`).ReplaceAllString(from, "\n")
 }
 
-func unindentAllRemainingBulletPoints(from string) string {
+func removeTabFromMultiLevelBulletPoints(from string) string {
 	return regexp.MustCompile(`(?m:^\t{1,}[^\t])`).ReplaceAllStringFunc(from, func(s string) string {
 		return s[1:]
 	})
@@ -150,8 +150,7 @@ func parseContent(rawContent string) parsedContent {
 		firstBulletPointsToParagraphs,
 		// since we turned the first bullet points to paragraphs
 		// we shift all bullet points by one tab to the left
-		// including subsequent lines for multiline strings
-		unindentAllRemainingBulletPoints,
+		removeTabFromMultiLevelBulletPoints,
 	)
 	return parsedContent{
 		attributes: parseAttributes(rawContent),

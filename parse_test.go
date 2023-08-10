@@ -136,6 +136,12 @@ func TestParseContent(t *testing.T) {
 		require.Equal(t, "true", result.attributes["public"])
 	})
 
+	t.Run("trims attribute names and values", func(t *testing.T) {
+		result := parseContent("  public::   true\n")
+		require.Equal(t, "", result.content)
+		require.Equal(t, "true", result.attributes["public"])
+	})
+
 	t.Run("parses page with one line", func(t *testing.T) {
 		result := parseContent("- a\n")
 		require.Equal(t, "\na\n", result.content)
